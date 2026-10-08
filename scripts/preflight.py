@@ -51,6 +51,9 @@ def main() -> None:
     fn = boto3.client("lambda", region_name=REGION)
     case = next(f for f in fn.list_functions()["Functions"] if f["FunctionName"].startswith("Teesri-Case"))
     mode = case.get("Environment", {}).get("Variables", {}).get("AGENT_MODE", "template")
+    res = fn.invoke(FunctionName=case["FunctionName"], Payload=json.dumps({"step": "selftest"}).encode())
+    body = json.loads(res["Payload"].read() or b"{}")
+    check("Case Lambda: Strands + Cedar load", "FunctionError" not in res, f"strands {body.get('strands')}, cedarpy {body.get('cedarpy')}")
     rt = boto3.client("bedrock-runtime", region_name=REGION, config=Config(retries={"max_attempts": 1}))
     try:
         rt.converse(modelId=os.environ.get("MODEL_ID", "global.amazon.nova-2-lite-v1:0"),

@@ -240,9 +240,19 @@ def _say(hh_id: str, inc_id: str, template: str, text: str) -> None:
     channel.send_voice(hh_id, _audio[key], audio_key=key)
 
 
+def selftest(e):
+    """Deploy check: the agent's libraries import and build in this Lambda (no model call)."""
+    import importlib.metadata as md
+
+    from teesri import case_agent
+    case_agent.model()
+    return {"strands": md.version("strands-agents"), "cedarpy": md.version("cedarpy"),
+            "agent_mode": agent.MODE, "policies": len(policy.POLICIES)}
+
+
 STEPS = {
     "prepare": prepare, "ask_volunteer": ask_volunteer, "ring": ring, "warn_home": warn_home, "warned": warned,
     "notify_ward": notify_ward, "await_reply": await_reply, "handle_reply": handle_reply, "checkins": checkins,
     "evaluate": evaluate, "reopened": reopened, "closed": closed, "still_open": still_open,
-    "unapproved": _status("UNAPPROVED"), "held": _status("HELD"), "no_reply": _status("NO_WARD_REPLY"),
+    "selftest": selftest, "unapproved": _status("UNAPPROVED"), "held": _status("HELD"), "no_reply": _status("NO_WARD_REPLY"),
 }
