@@ -11,12 +11,12 @@ Every monsoon in Mumbai, the water from my tap turns dirty, and I never know whe
 ## What I built
 
 1. **Join in one tap.** Scan a QR code, open the Telegram bot, share your location and tap हाँ to consent. There is no app to install and no form to fill.
-2. **Complain the way people do: a Hindi voice note.** Amazon Transcribe (hi-IN) writes it down. Amazon Nova fills a fixed schema (colour, smell, since when, who is ill), and code validates every field. If the model can't read the note, the resident answers three button questions instead.
+2. **Complain the way people do: a Hindi voice note.** Amazon Transcribe (hi-IN) writes it down. Amazon Nova fills a fixed schema (colour, smell, since when, who is ill), and code validates every field. If the model is unavailable, a plain-code keyword reader fills the same fields from the Hindi words, with the same checks; only if neither can read the note does the resident answer three button questions.
 3. **The tripwire is code, not AI.** It fires on 3 different homes, every pair within 250 m, within 72 h. If all three homes are within 30 m (one building, one tank), there is no area alarm; those flats get tank-cleaning advice instead. A report belongs to at most one incident, enforced by a DynamoDB transaction.
 4. **One case per incident.** A Step Functions case briefs a local volunteer in Hindi, and one tap approves the warning. Every enrolled home in the 250 m ring then gets a Hindi warning as text plus an Amazon Polly voice note: boil water, ORS, see a doctor, and the nearest public hospital. The ward office gets a formal email with no names or numbers.
 5. **Closed at the tap, not on paper.** When the ward office says "resolved", that only counts as a request to close, and Cedar denies it. The residents are asked instead. Any "not clean" reopens the case. At least 3 "clean" answers and no "not clean" closes it, and silence never does.
 
-**The model decides language; code decides actions.** The tripwire, the ring, the recipients, the timers and the closure rule are plain, tested code (48 tests). Cedar checks every side effect and every agent tool call, and fails closed. Every decision appears on the console's Safety tab. A human approves every broadcast.
+**The model decides language; code decides actions.** The tripwire, the ring, the recipients, the timers and the closure rule are plain, tested code (51 tests). Cedar checks every side effect and every agent tool call, and fails closed. Every decision appears on the console's Safety tab. A human approves every broadcast.
 
 The demo uses 22 simulated homes on a phone wall, labelled on screen, plus my real phone. Simulated homes go through the same code path as a real phone, via a channel adapter.
 
@@ -34,7 +34,7 @@ The demo uses 22 simulated homes on a phone wall, labelled on screen, plus my re
 - **CDK (Python)** deploys everything as one stack in ap-south-1. Secrets live in SSM Parameter Store.
 - **Cost:** one incident (24 homes warned, one reopen) costs about ₹1 ($0.011), measured from a live run's Step Functions history and Lambda logs and priced with the AWS Pricing API.
 
-⚠ This AWS account's Bedrock quota was 0 throughout the build (support case open). Voice notes therefore fall back to the button questions, and the case agent runs in template mode. Agent mode is tested offline with a scripted model and switches on with one setting.
+⚠ This AWS account's Bedrock quota was 0 throughout the build (support case open). Voice notes are therefore read by the keyword reader (buttons only when it finds no colour or smell), and the case agent runs in template mode. Agent mode is tested offline with a scripted model and switches on with one setting.
 
 ## Links
 

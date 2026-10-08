@@ -105,6 +105,17 @@ def test_model_failure_falls_back_to_buttons_and_never_counts_as_clean(env, monk
     assert sum(1 for e in env if e[0] == "voice") == 1
 
 
+def test_model_unavailable_keyword_reader_files_it_without_questions(env, monkeypatch):
+    join()
+    monkeypatch.setattr(voice, "read_transcript", lambda name: ("पानी पीला है, बदबू आ रही है, दो दिन से ।", "k"))
+    monkeypatch.setattr(extract, "extract", lambda t: None)  # Bedrock quota 0
+    handler.main({"source": "aws.transcribe", "detail": {"TranscriptionJobName": f"vn_{ME}_80", "TranscriptionJobStatus": "COMPLETED"}}, None)
+    rpt = store.table().get_item(Key={"PK": f"RPT#{ME}-80", "SK": "META"})["Item"]
+    assert (rpt["colour"], rpt["smell"], rpt["since_days"], rpt["source"]) == ("yellow", True, 2, "keywords")
+    assert env[-2][2] == texts.receipt({"colour": "yellow", "smell": True, "since_days": 2}) and env[-1][0] == "voice"
+    assert not any(e[2] in (texts.ASK_COLOUR, texts.FALLBACK_COLOUR) for e in env if len(e) > 2)
+
+
 def test_voice_before_joining_gets_welcome(env, monkeypatch):
     monkeypatch.setattr(telegram, "download_file", lambda fid: pytest.fail("must not download"))
     post(msg(voice={"file_id": "f", "duration": 3}))

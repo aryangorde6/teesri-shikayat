@@ -53,7 +53,7 @@ def arch() -> str:
     boxes = [
         ("Telegram", "WhatsApp-ready adapter", ""), ("Lambda", "Function URL", "code"),
         ("S3 · Transcribe", "Hindi voice note", "ai"),
-        *([("Nova 2 Lite", "fixed schema, code-checked", "ai")] if agent else [("3 buttons", "colour · smell · since when", "code")]),
+        *([("Nova 2 Lite", "fixed schema, code-checked", "ai")] if agent else [("Keyword reader", "Hindi words → same fields", "code")]),
         ("DynamoDB", "Streams", "code"), ("EventBridge Pipes", "new reports only", "code"),
         ("Tripwire", "3 homes · 250 m · 72 h", "code"), ("Step Functions", "one case, held for days", "code"),
         ("Strands agent" if agent else "Case steps", "brief · email · reply" if agent else "fixed templates", "ai" if agent else "code"),

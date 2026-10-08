@@ -15,7 +15,7 @@ One live run films the PHONE shots and the WEB shots together: `console_tour.py 
 ## The run
 
 1. `AWS_PROFILE=hackathon .venv/bin/python scripts/console_tour.py --third phone` (seeds A–V, makes your phone the volunteer, records `video/web-tour/web-tour.webm` + `beats.json`)
-2. When it prints "waiting for your voice note": send a ~4 s Hindi voice note, e.g. *"नल से भूरा पानी आ रहा है, बहुत बदबू है, दो दिन से"* (shot 6). Without Nova, answer the three buttons.
+2. When it prints "waiting for your voice note": send a ~4 s Hindi voice note, e.g. *"नल से भूरा पानी आ रहा है, बहुत बदबू है, दो दिन से"* (shot 6). Without Nova, the keyword reader files it straight away as long as you say a colour (पीला/भूरा/काला) or बदबू; otherwise the three buttons appear.
 3. The ring snaps (shot 7). Your phone gets the volunteer card → tap **हाँ, भेजें** (shot 8; label: "demo: my phone plays the volunteer").
 4. Your phone plays the warning (shot 9).
 5. The tour sends the ward office reply ("+2 days", shot 11). Your phone asks "पानी साफ़ है?" → tap **नहीं, अभी भी गंदा** → REOPENED.

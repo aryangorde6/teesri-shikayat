@@ -1,10 +1,12 @@
 """Transcript -> fixed complaint fields. The model only fills a schema; code validates every field.
 
-Any failure (no quota, bad JSON, nothing usable) returns None, and the caller asks the
-resident with buttons instead. The loop never depends on the model.
+Any failure (no quota, bad JSON, nothing usable) returns None. The caller then tries keywords(), a plain-code
+reader for the common Hindi words, and only if that finds nothing either asks the resident with buttons.
+The loop never depends on the model.
 """
 import logging
 import os
+import re
 
 import boto3
 
@@ -80,6 +82,72 @@ def validate(raw: dict) -> dict | None:
         "illness": sorted({i for i in raw.get("illness") or [] if i in ILLNESS}),
         "vulnerable": sorted({v for v in raw.get("vulnerable") or [] if v in VULNERABLE}),
     }
+
+
+# --- keywords(): the same fields from plain Hindi words, when the model is unavailable --------------------------
+# Spellings are compared without nukta and with ँ as ं, so फ़/फ and पाँच/पांच both match.
+COLOUR_WORDS = {
+    "yellow": {"पीला", "पीले", "पीली", "पिला", "पिले", "yellow"},
+    "brown": {"भूरा", "भूरे", "भूरी", "भुरा", "मटमैला", "मटमैले", "मटमैली", "मटियाला", "मिट्टी", "brown"},
+    "black": {"काला", "काले", "काली", "black"},
+}
+SMELL_WORDS = {"बदबू", "बदबु", "बदबूदार", "बास", "दुर्गंध", "गंध", "smell"}
+ILLNESS_WORDS = {
+    "diarrhoea": {"दस्त", "डायरिया", "लूज"}, "vomiting": {"उल्टी", "उलटी", "उल्टियां"}, "fever": {"बुखार", "fever"},
+    "jaundice": {"पीलिया"}, "skin_rash": {"खुजली", "दाने", "रैश"},
+}
+VULNERABLE_WORDS = {
+    "child": {"बच्चे", "बच्चा", "बच्ची", "बच्चों", "बेटा", "बेटे", "बेटी"},
+    "elderly": {"बुजुर्ग", "बूढे", "बूढी", "दादा", "दादी", "नाना", "नानी"},
+    "pregnant": {"गर्भवती", "प्रेग्नेंट"},
+}
+NUMBERS = {"एक": 1, "दो": 2, "तीन": 3, "चार": 4, "पांच": 5, "छह": 6, "छः": 6, "सात": 7, "आठ": 8, "नौ": 9, "दस": 10}
+UNITS = {"दिन": 1, "दिनों": 1, "हफ्ता": 7, "हफ्ते": 7, "हफ्तों": 7, "सप्ताह": 7, "महीना": 30, "महीने": 30, "महीनों": 30}
+SINCE_WORDS = {"आज": 0, "सुबह": 0, "कल": 1, "परसों": 2}
+NEGATION = {"नहीं", "नही"}  # not "ना": "है ना?" is a question tag
+CLAUSE = re.compile(r"[।,.!?;]|\s(?:और|लेकिन|मगर|पर)\s")
+
+
+def _norm(text: str) -> str:
+    return text.replace("\u093c", "").replace("\u0901", "\u0902").lower()
+
+
+def _said(clauses: list[list[str]], words: set[str]) -> bool | None:
+    """True if a word from `words` is said; False if only ever with a नहीं after it in the same clause; None if never."""
+    found = None
+    for c in clauses:
+        for i, t in enumerate(c):
+            if t in words:
+                if not NEGATION & set(c[i + 1:]):
+                    return True
+                found = False
+    return found
+
+
+def _since(tokens: list[str]) -> int:
+    for i, t in enumerate(tokens):  # "दो दिन", "2-3 दिन" (the larger), "एक हफ़्ते"
+        if t in UNITS:
+            n = tokens[i - 1] if i else ""
+            n = NUMBERS.get(n) or (int(n) if n.isdigit() and int(n) <= 365 else None)
+            if n is None and UNITS[t] > 1:
+                n = 1  # "हफ़्ते से" = a week
+            if n is not None:
+                return min(n * UNITS[t], 365)
+    return next((SINCE_WORDS[t] for t in tokens if t in SINCE_WORDS), -1)
+
+
+def keywords(transcript: str) -> dict | None:
+    """Plain-code reading of a Hindi transcript into the same fields as the model, then the same validate().
+    Only words that are actually said count; "पानी गंदा है" alone names no colour or smell, so it returns None."""
+    clauses = [re.findall(r"[^\s\-–]+", c) for c in CLAUSE.split(_norm(f" {transcript} "))]
+    tokens = [t for c in clauses for t in c]
+    colour = next((name for name, words in COLOUR_WORDS.items() if _said(clauses, words)), "not_said")
+    illness = [name for name, words in ILLNESS_WORDS.items() if _said(clauses, words)]
+    if any("पेट" in c and "दर्द" in c and not NEGATION & set(c) for c in clauses):
+        illness.append("stomach_pain")
+    vulnerable = [name for name, words in VULNERABLE_WORDS.items() if illness and words & set(tokens)]
+    return validate({"colour": colour, "smell": {True: "yes", False: "no", None: "not_said"}[_said(clauses, SMELL_WORDS)],
+                     "since_days": _since(tokens), "illness": illness, "vulnerable": vulnerable})
 
 
 def is_dirty(f: dict) -> bool:

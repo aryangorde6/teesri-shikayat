@@ -136,7 +136,7 @@ def on_consent(hh_id: str, yes: bool) -> None:
     channel.send_text(hh_id, texts.JOINED)
 
 
-# --- Fallback questions (when the model can't read the voice note) -------------
+# --- Fallback questions (when neither the model nor the keyword reader can read the voice note) -------------
 
 def ask_colour(hh_id: str, rpt_id: str, heard: bool = False) -> None:
     text = texts.ASK_COLOUR if heard else texts.FALLBACK_COLOUR
@@ -173,9 +173,11 @@ def on_transcribed(detail: dict) -> None:
     if detail.get("TranscriptionJobStatus") == "COMPLETED":
         transcript, key = voice.read_transcript(name)
     log.info("transcript %s: %s", rpt_id, transcript)
-    fields = extract.extract(transcript)
+    fields, source = extract.extract(transcript), "nova"
+    if not fields:  # model unavailable or found nothing: the plain-code keyword reader, same fields, same checks
+        fields, source = extract.keywords(transcript), "keywords"
     if fields:
-        return finalize(rpt_id, hh, fields, "nova", transcript, key)
+        return finalize(rpt_id, hh, fields, source, transcript, key)
     store.put_draft(rpt_id, hh_id=hh_id, transcript=transcript, transcript_key=key)
     ask_colour(hh_id, rpt_id, heard=bool(transcript.strip()))
 

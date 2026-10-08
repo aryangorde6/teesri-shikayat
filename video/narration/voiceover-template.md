@@ -24,7 +24,7 @@ Nothing new to learn. Scan a code, tap Start on Telegram, share your location, a
 
 ## 0:45–1:01 · 6 voice note
 
-Then you complain the way people actually do: a voice note, in Hindi. Amazon Transcribe writes it down, and three quick taps confirm what matters: the colour, the smell, and how long.
+Then you complain the way people actually do: a voice note, in Hindi. Amazon Transcribe writes it down, and plain code picks out what matters: the colour, the smell, how long, and who's sick.
 
 ## 1:01–1:13 · 7 tripwire
 

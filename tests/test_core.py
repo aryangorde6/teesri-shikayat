@@ -34,6 +34,27 @@ def test_validate_drops_bad_numbers():
     assert f["since_days"] is None and f["smell"] is None
 
 
+def test_keywords_read_the_common_hindi_complaint():
+    f = extract.keywords("पानी पीला है और बदबू आ रही है, दो दिन से ।")
+    assert (f["colour"], f["smell"], f["since_days"], f["illness"]) == ("yellow", True, 2, [])
+    f = extract.keywords("मटमैला पानी आ रहा है, बच्चे को दस्त और उल्टी हो रही है, कल से")
+    assert (f["colour"], f["smell"], f["since_days"]) == ("brown", None, 1)
+    assert f["illness"] == ["diarrhoea", "vomiting"] and f["vulnerable"] == ["child"]
+    f = extract.keywords("बदबू आ रही है एक हफ़्ते से, पेट में दर्द है")  # nukta spelling, no colour said
+    assert (f["colour"], f["smell"], f["since_days"], f["illness"]) == (None, True, 7, ["stomach_pain"])
+    assert extract.keywords("काला पानी, 2-3 दिन से")["since_days"] == 3
+
+
+def test_keywords_never_guess():
+    assert extract.keywords("पानी गंदा है ।") is None          # "dirty" names no colour or smell: ask with buttons
+    assert extract.keywords("") is None
+    f = extract.keywords("पानी भूरा है लेकिन बदबू नहीं है")
+    assert (f["colour"], f["smell"], f["since_days"]) == ("brown", False, None)
+    assert extract.keywords("पानी काला नहीं है") is None        # a denied colour is not a colour
+    assert extract.keywords("घर में किसी को पीलिया है, पानी पीला है")["illness"] == ["jaundice"]  # पीलिया is not पीला
+    assert extract.keywords("बदबू है, बच्चे ठीक हैं")["vulnerable"] == []  # a child named without illness is not marked
+
+
 def test_is_dirty():
     assert extract.is_dirty({"colour": "black"})
     assert extract.is_dirty({"colour": "clear", "smell": True})
