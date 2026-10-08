@@ -12,6 +12,9 @@ Built for the WeMakeDevs × AWS **Environmental Hacks** (Heat and Water track), 
 
 BMC's SOP asks for immediate alerts to residents. Teesri Shikayat does that from the street up, and lets residents confirm when the tap is clean.
 
+![Console: the ring, its card and the phone wall after the warning](docs/img/console-warned.jpg)
+*The console during a rehearsal (a simulated stand-in plays my phone; real phones muted). Every enrolled home in the 250 m ring was warned; 21 of 24 never complained.*
+
 ## How it works
 
 1. **Join in one tap.** Scan a QR code → Telegram bot → share your location → tap हाँ (consent). No app, no forms.
@@ -50,6 +53,9 @@ flowchart LR
 | consent-before-message | Only homes that said हाँ are messaged |
 | read-only-before-approval | While preparing a case, the agent may only read |
 
+![Safety tab: the ward office's close request denied](docs/img/console-deny.jpg)
+*The ward office says "Resolved": Cedar denies the close (only residents can close a case), and the residents are asked instead.*
+
 **Case agent (Strands).** Three goals: brief the volunteer, write to the ward office, handle the ward office's reply. Numbers in its output come from code; a brief that cites a report that doesn't exist, or adds numbers, is rejected. At most 6 tool calls per goal; any failure falls back to fixed templates. *Status: this AWS account's Bedrock quota is still 0 (support case open), so the deployed case runs in template mode; agent mode is tested offline with a scripted model and switches on with `AGENT_MODE=agent`.*
 
 ## What's real and what's simulated
@@ -63,7 +69,7 @@ flowchart LR
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
-.venv/bin/python -m pytest -q                                           # 45 tests, no AWS account needed
+.venv/bin/python -m pytest -q                                           # 47 tests, no AWS account needed
 ./build.sh && AWS_PROFILE=<profile> cdk deploy                          # one stack: Teesri (ap-south-1)
 AWS_PROFILE=<profile> .venv/bin/python scripts/set_webhook.py           # point the Telegram bot at the stack
 AWS_PROFILE=<profile> .venv/bin/python scripts/scenario.py seed          # 22 simulated homes; then open <FunctionUrl>/console
