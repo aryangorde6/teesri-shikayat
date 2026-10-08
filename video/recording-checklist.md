@@ -26,3 +26,13 @@ One live run films the PHONE shots and the WEB shots together: `console_tour.py 
 - [ ] `AWS_PROFILE=hackathon .venv/bin/python scripts/cost_per_incident.py` → put the ₹ figure into `video/slides-data.json` (shot 13)
 - [ ] `scenario.py reset` (stops the case so it doesn't sit waiting for 7 days)
 - [ ] Every label from the spec is on screen: "Simulated home A–V", "demo: my phone plays the volunteer", "+2 days (demo clock)", "Indore replay: reconstruction", "Not affiliated with BMC"
+
+## Assemble (after the footage)
+
+Preview any time: `.venv/bin/python scripts/build_video.py --out video/out/animatic.mp4` renders the full 2:48. A missing clip shows as a labelled placeholder.
+
+1. **Cards:** run `.venv/bin/python scripts/build_cards.py`, after putting the final ₹ figure into `video/slides-data.json`. In template mode, also run `--mode template --out video/cards/template`.
+2. **Narration:** open `video/narration/narration-chatterbox.ipynb` in Colab (T4) → Run all → unzip the clips into one folder. Then run `~/aws_environment/video-tools/build-voice --clips <folder> --lines video/narration/lines.json --script video/narration/voiceover.md --length 168 --spread [--music <file>] --out video/out/voice.wav`. Use `voiceover-template.md` for template mode, or edit slot 2 to "Dozens died." if you choose the ALT line.
+3. **Footage:** put `phone.mp4` (scrcpy), `aws.mp4` (screencast), `stock-tap.mp4` and `cam-tap.mp4` into `video/footage/`. Set each `"in": null` in `video/edl.json` to the second where that moment starts in your recording. The console tour needs nothing: its in-points come from `beats.json`.
+4. **Check** that the shot 9 caption ("20 of 23 … All 23") matches what the console says in your run.
+5. **Render:** `.venv/bin/python scripts/build_video.py --voice video/out/voice.wav --subs video/out/voice.srt [--mode template] --out video/out/teesri.mp4`. It must print 2:4x (the limit is 3:00).
