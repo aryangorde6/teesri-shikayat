@@ -56,7 +56,7 @@ flowchart LR
 | read-only-before-approval | While preparing a case, the agent may only read |
 
 ![Safety tab: the ward office's close request denied](docs/img/console-deny.jpg)
-*The ward office says "Resolved": Cedar denies the close (only residents can close a case), and the residents are asked instead.*
+*Agent mode, on our own model: the ward office says "Resolved", the case agent tries `close_case`, Cedar denies it (only residents can close a case), and the agent asks the residents instead. (Rehearsal: real phones muted.)*
 
 **Case agent (Strands).** Three goals: brief the volunteer, write to the ward office, handle the ward office's reply. Numbers in its output come from code; a brief that cites a report that doesn't exist, or adds numbers, is rejected. At most 6 tool calls per goal; any failure falls back to fixed templates.
 

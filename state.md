@@ -77,7 +77,7 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
 3. ✅ **Agent mode works now, on our own model** (no Bedrock needed; the Fri 10:00 cutoff is gone). Record in agent mode: `scenario.py model on` before (≈1 min), `model off` after. Template mode stays as the fallback if the instance can't run. If Bedrock quota ever arrives: `MODEL_BACKEND=bedrock` in `infra/stack.py`.
 4. **Needs Aryan:**
    - (a) ✅ Telegram Web linked (18:37).
-   - (b) Send the AWS support reply in `~/aws_environment/SEND-QUEUE.md`.
+   - (b) Optional now: the AWS support reply in `~/aws_environment/SEND-QUEUE.md` (the demo no longer needs Bedrock).
    - (c) Decide slot 2: "Thirty-six died." or the ALT "Dozens died." (the source says 36 deaths *examined*, 24 linked; Wikipedia 32).
    - (d) Run `video/narration/narration-chatterbox.ipynb` on a Colab T4 (~30 min; covers every variant), then listen to how "Teesri Shikayat" is pronounced.
    - (e) Put the AI-tools line in `docs/writeup.md` in your own words.
@@ -88,7 +88,6 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
 
 - **Bedrock quota is 0** for every model and region tried (re-probed 19:50). Quota requests for Nova 2 Lite still `CASE_OPENED`. Worked around: the model runs on our own EC2 instance (see Done 19:50–21:19).
 - **Model instance cost:** $0.43/h while running; it stops itself after an idle hour. Turn it on only for rehearsals/recording.
-- README screenshots (`docs/img/console-deny.jpg`) show the template-mode DENY (`ward_office → close_case`); retake in agent mode (`case_agent → close_case`) on recording day.
 - **Deadline hour still TBA:** schedule page re-checked Thu 17:50 ("the hours are being finalised"). Rules page: a submission is a public repo, a YouTube video up to 3 minutes (public or unlisted), and a short writeup (problem, build, where AWS fits); the form closes hard. Form link and fields not published yet.
 - Telegram Desktop can't be driven from this machine (Wayland, no automation); phone steps go through Telegram Web in Chrome (linked 18:37). Recording still needs the real phone screen (shots 5, 6, 8, 9, 11).
 - The shot 9 caption ("20 of 23 … All 23") is fixed text in `video/edl.json`; check it against the console after the recording run.
