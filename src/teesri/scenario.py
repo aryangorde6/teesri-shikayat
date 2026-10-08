@@ -164,11 +164,11 @@ def third_stand_in() -> str:
 
 def status() -> dict:
     clat, clon = ring_centre()
-    incs = [i for i in store.scan_prefix("INC#")]
+    incs = [i for i in store.scan_prefix("INC#") if i.get("SK") == "META"]  # not its events, check-ins or mail
     return {
         "enrolled_in_ring": len(store.households_near(clat, clon, tripwire.RING_M)),
         "reports": sorted(r["PK"][4:] for r in store.scan_prefix("RPT#")),
-        "incidents": [{k: i.get(k) for k in ("inc_id", "status", "fired", "ring_pop")} | {"homes": sorted(i["homes"])}
+        "incidents": [{k: i.get(k) for k in ("inc_id", "status", "reopen_count", "fired", "ring_pop")} | {"homes": sorted(i["homes"])}
                       for i in incs],
         "feed": [f.get("decision") or f.get("kind") for f in store.scan_prefix("FEED")],
     }
