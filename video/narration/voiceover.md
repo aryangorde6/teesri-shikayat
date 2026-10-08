@@ -1,6 +1,6 @@
 # Voice-over (agent mode) — read against the video timeline
 
-The narration from `~/aws_environment/prep/video-script.md`, one section per slot. `build-voice --script` reads the "## M:SS–M:SS · label" headings. Variants: `voiceover-template.md` (no Bedrock quota) and the line marked ALT in `lines.json` (slot 2). One Colab run (`narration-chatterbox.ipynb`) makes clips for every variant.
+The narration from `~/aws_environment/prep/video-script.md`, one section per slot. `build-voice --script` reads the "## M:SS–M:SS · label" headings. Variants: `voiceover-template.md` (template mode, if the model instance can't run) and the line marked ALT in `lines.json` (slot 2). One Colab run (`narration-chatterbox.ipynb`) makes clips for every variant.
 
 ## 0:00–0:07 · 1 my tap
 
@@ -24,7 +24,7 @@ Nothing new to learn. Scan a code, tap Start on Telegram, share your location, a
 
 ## 0:45–1:01 · 6 voice note
 
-Then you complain the way people actually do: a voice note, in Hindi. Amazon Transcribe writes it down, and Nova pulls out what matters: the colour, the smell, how long, and who's sick.
+Then you complain the way people actually do: a voice note, in Hindi. Amazon Transcribe writes it down, and Gemma, an open model on our own AWS server, pulls out what matters: the colour, the smell, how long, and who's sick.
 
 ## 1:01–1:13 · 7 tripwire
 

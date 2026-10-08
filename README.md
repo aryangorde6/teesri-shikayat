@@ -18,7 +18,7 @@ BMC's SOP asks for immediate alerts to residents. Teesri Shikayat does that from
 ## How it works
 
 1. **Join in one tap.** Scan a QR code → Telegram bot → share your location → tap हाँ (consent). No app, no forms.
-2. **Complain the way people do: a Hindi voice note.** Amazon Transcribe (hi-IN) writes it down; Amazon Nova fills a fixed schema (colour, smell, since when, who is ill); code validates every field. If the model is unavailable, a plain-code keyword reader fills the same fields from the Hindi words (पीला, बदबू, दो दिन…) and the same checks apply; only if neither can read it does the resident answer three button questions. A failed read never counts as "clean". Typed complaints count too, in Hindi or Roman-script Hinglish ("paani peela hai, badbu aa rahi hai").
+2. **Complain the way people do: a Hindi voice note.** Amazon Transcribe (hi-IN) writes it down; an open model we host on AWS (Gemma 4, see below) fills a fixed schema (colour, smell, since when, who is ill); code validates every field, and an illness or a vulnerable person the resident never mentioned is dropped, whatever the model said. A plain-code keyword reader fills anything the model left empty from the Hindi words (पीला, बदबू, दो दिन…), and takes over if the model is off; only if neither can read it does the resident answer three button questions. A failed read never counts as "clean". Typed complaints count too, in Hindi or Roman-script Hinglish ("paani peela hai, badbu aa rahi hai").
 3. **The tripwire (code, no AI).** Every new report flows DynamoDB Streams → EventBridge Pipes → a rule: **3 different homes, every pair within 250 m, within 72 h.** If all three are within 30 m (one building, one tank), there's no area alarm; those flats get tank-cleaning advice instead. A report belongs to at most one incident (one DynamoDB transaction), so two simultaneous "third" reports make exactly one incident.
 4. **A case per incident (Step Functions).** The case agent briefs a local volunteer in Hindi; one tap approves. Then every enrolled home in the 250 m ring gets a Hindi warning (text + Amazon Polly voice): boil water, ORS, see a doctor, the nearest public hospital. The ward office gets a formal email **with no names or numbers**.
 5. **Closed at the tap, not on paper.** When the ward office says "resolved", that is a request to close the case, and Cedar denies it: only residents can close a case. Every home in the ring is asked "पानी साफ़ है?". Any "not clean" reopens the case at once; at least 3 "clean" and no "not clean" closes it; silence never closes it.
@@ -26,7 +26,8 @@ BMC's SOP asks for immediate alerts to residents. Teesri Shikayat does that from
 ```mermaid
 flowchart LR
   TG[Telegram voice note] --> L[API Lambda] --> S3[(S3)] --> TR[Transcribe hi-IN] --> EB[EventBridge] --> L
-  L -->|"Nova schema, keyword reader or buttons"| DDB[(DynamoDB)]
+  L -->|"model schema + keyword reader, or buttons"| DDB[(DynamoDB)]
+  L <-.->|"SQS / DynamoDB"| MV["Model instance<br/>Gemma 4 E4B in llama.cpp<br/>EC2 Graviton4, no inbound ports"]
   DDB -->|Streams| P["EventBridge Pipes<br/>RPT inserts only"] --> TW["Tripwire Lambda<br/>rule in code"]
   TW -->|incident| SF[Step Functions case]
   SF --> C["Case Lambda<br/>Cedar on every action"]
@@ -34,6 +35,7 @@ flowchart LR
   C --> W["Ring warning<br/>Map + Polly"]
   C --> M[Ward office email]
   C --> K["Check-ins: REOPENED or CLOSED_AT_TAP"]
+  C <-.->|"Strands agent"| MV
   POP["GHS-POP 2025<br/>Open Data on AWS"] -.-> TW
 ```
 
@@ -56,11 +58,13 @@ flowchart LR
 ![Safety tab: the ward office's close request denied](docs/img/console-deny.jpg)
 *The ward office says "Resolved": Cedar denies the close (only residents can close a case), and the residents are asked instead.*
 
-**Case agent (Strands).** Three goals: brief the volunteer, write to the ward office, handle the ward office's reply. Numbers in its output come from code; a brief that cites a report that doesn't exist, or adds numbers, is rejected. At most 6 tool calls per goal; any failure falls back to fixed templates. *Status: this AWS account's Bedrock quota is still 0 (support case open), so the deployed case runs in template mode; agent mode is tested offline with a scripted model and switches on with `AGENT_MODE=agent`.*
+**Case agent (Strands).** Three goals: brief the volunteer, write to the ward office, handle the ward office's reply. Numbers in its output come from code; a brief that cites a report that doesn't exist, or adds numbers, is rejected. At most 6 tool calls per goal; any failure falls back to fixed templates.
+
+**The model runs on our own instance.** This AWS account's Bedrock quota is 0 (support case open), so the agent and the voice-note reader use an open model we host ourselves: **Gemma 4 E4B** (Apache-2.0, Google's QAT q4_0 build) in **llama.cpp** on one **EC2 Graviton4** instance (`model/worker.py`). It has **no inbound ports**: requests arrive over SQS and answers come back through DynamoDB, all checked by IAM (`src/teesri/selfhost.py`; Strands talks to it through an httpx transport). The weights are checksum-pinned and kept in S3. It costs $0.43/h while on and stops itself after an idle hour (`scenario.py model on|off`); if it is off, every goal falls back to its template, and the Safety tab says so. Measured: about 2 s per voice note, 3–5 s per agent goal. Nova on Bedrock plugs into the same code with `MODEL_BACKEND=bedrock`.
 
 ## What's real and what's simulated
 
-- **Real:** the Telegram bot, the voice pipeline, the tripwire, Step Functions, Cedar, Polly, the ring population and map data, and my own phone.
+- **Real:** the Telegram bot, the voice pipeline, the self-hosted model and the case agent, the tripwire, Step Functions, Cedar, Polly, the ring population and map data, and my own phone.
 - **Simulated, and labelled on screen:** homes A–V on the phone wall (they use the same code path as a real phone, through a channel adapter), the "+2 days" demo clock, the ward office's reply (a console button), and the ward office inbox (a test inbox).
 - **Indore replay:** a labelled reconstruction. Complaint dates are not public, so it assumes three complaints on Dec 15–17.
 - **Channel:** Telegram for the demo. WhatsApp plugs into the same adapter (`src/teesri/channel.py`).
@@ -69,9 +73,10 @@ flowchart LR
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
-.venv/bin/python -m pytest -q                                           # 55 tests, no AWS account needed
+.venv/bin/python -m pytest -q                                           # 61 tests, no AWS account needed
 ./build.sh && AWS_PROFILE=<profile> cdk deploy                          # one stack: Teesri (ap-south-1)
 AWS_PROFILE=<profile> .venv/bin/python scripts/set_webhook.py           # point the Telegram bot at the stack
+AWS_PROFILE=<profile> .venv/bin/python scripts/scenario.py model on      # start the model instance (stops itself when idle)
 AWS_PROFILE=<profile> .venv/bin/python scripts/scenario.py seed          # 22 simulated homes; then open <FunctionUrl>/console
 ```
 

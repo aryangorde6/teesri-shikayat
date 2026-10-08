@@ -53,7 +53,7 @@ def arch() -> str:
     boxes = [
         ("Telegram", "WhatsApp-ready adapter", ""), ("Lambda", "Function URL", "code"),
         ("S3 · Transcribe", "Hindi voice note", "ai"),
-        *([("Nova 2 Lite", "fixed schema, code-checked", "ai")] if agent else [("Keyword reader", "Hindi words → same fields", "code")]),
+        *([("Gemma 4 · our EC2", "open model, code-checked", "ai")] if agent else [("Keyword reader", "Hindi words → same fields", "code")]),
         ("DynamoDB", "Streams", "code"), ("EventBridge Pipes", "new reports only", "code"),
         ("Tripwire", "3 homes · 250 m · 72 h", "code"), ("Step Functions", "one case, held for days", "code"),
         ("Strands agent" if agent else "Case steps", "brief · email · reply" if agent else "fixed templates", "ai" if agent else "code"),
@@ -64,10 +64,12 @@ def arch() -> str:
         if i:
             parts.append('<span class="arrow">→</span>')
         parts.append(f'<div class="box {cls}">{E(name)}<small>{E(sub)}</small></div>')
-    return (f'<div class="kicker">Serverless on AWS · one CDK stack · ap-south-1</div><div class="flow">{"".join(parts)}</div>'
+    return (f'<div class="kicker">On AWS · one CDK stack · ap-south-1</div><div class="flow">{"".join(parts)}</div>'
             '<div class="legend"><span class="c">plain code, tested</span><span class="a">AI or speech</span>'
             '<span class="g">policy guard (fails closed)</span></div>'
-            + ("" if agent else '<div class="src">Agent mode (Nova + Strands) is built and tested offline; this account\'s Bedrock quota is 0.</div>'))
+            + ('<div class="src">Bedrock quota on this account is 0, so the model is ours: Gemma 4 E4B in llama.cpp on one EC2 Graviton4 '
+               'instance, no inbound ports (requests over SQS). Nova plugs into the same code.</div>' if agent else
+               '<div class="src">Template mode: the case steps use fixed wording when the model instance is off.</div>'))
 
 
 CARDS = {
@@ -85,7 +87,7 @@ CARDS = {
     "13a-architecture": arch(),
     "13b-cost": f'''<div class="kicker">One real incident, measured</div><div class="cost">{E(D["cost_per_incident"]["card"])}</div>
         <div class="line">per incident: {E(D["cost_per_incident"]["detail"])}</div>
-        <div class="src">Step Functions history + Lambda logs of a live run, priced with the AWS Pricing API (ap-south-1, on-demand, no free tier). Telegram messages are free.</div>''',
+        <div class="src">Step Functions history + Lambda logs of a live run, priced with the AWS Pricing API (ap-south-1, on-demand, no free tier). Telegram messages are free. The model instance is extra: $0.43/h while on; it stops itself when idle.</div>''',
     "14-close": f'''<div class="bg" style="background-image:url('data:image/jpeg;base64,{base64.b64encode((ROOT / "docs/img/console-warned.jpg").read_bytes()).decode()}')"></div><div class="over">
         <div class="big" style="font-size:96px">Closed at the tap,<br>not on paper.</div>
         <div class="url" style="margin-top:50px">github.com/aryangorde6/teesri-shikayat</div>

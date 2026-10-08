@@ -67,7 +67,7 @@
  {
   "n": 14,
   "label": "6 voice note",
-  "say": "Amazon Transcribe writes it down, and Nova pulls out what matters: the colour, the smell, how long, and who's sick."
+  "say": "Amazon Transcribe writes it down, and Gemma, an open model on our own AWS server, pulls out what matters: the colour, the smell, how long, and who's sick."
  },
  {
   "n": 15,

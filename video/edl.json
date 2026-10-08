@@ -15,7 +15,7 @@
    "parts": [{"file": "video/footage/phone.mp4", "in": null, "box": [660, 0, 600, 1080], "what": "PHONE: QR → Start → location (Dongri) → हाँ → joined"}]},
   {"n": 6, "t": [45, 61],
    "parts": [{"file": "video/footage/phone.mp4", "in": null, "audio": true, "box": [160, 0, 600, 1080], "what": "PHONE: Hindi voice note (~4 s) → receipt"}],
-   "overlays": [{"file": "video/footage/aws.mp4", "in": null, "at": 3, "box": [860, 190, 960, 700], "what": "AWS: Hindi transcript → Nova JSON → DynamoDB item",
+   "overlays": [{"file": "video/footage/aws.mp4", "in": null, "at": 3, "box": [860, 190, 960, 700], "what": "AWS: Hindi transcript → model JSON → DynamoDB item (source: selfhost)",
                  "what@template": "AWS: Hindi transcript → DynamoDB item with source: keywords"}]},
   {"n": 7, "t": [61, 73], "label": "Simulated homes A–V · my phone is real",
    "parts": [{"beat": "map + wall", "offset": -1, "dur": 4.5}, {"beat": "ring snaps", "offset": -1}]},
