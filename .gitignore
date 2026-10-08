@@ -7,3 +7,5 @@ __pycache__/
 .env
 video/web-tour/
 video/cards/
+video/out/
+video/footage/
