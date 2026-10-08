@@ -1,6 +1,6 @@
 # State: what's built so far
 
-Last updated: Thu 08 Oct 2026, 13:30 IST · Event: WeMakeDevs × AWS Environmental Hacks (Heat and Water), Oct 8–11
+Last updated: Thu 08 Oct 2026, 15:15 IST · Event: WeMakeDevs × AWS Environmental Hacks (Heat and Water), Oct 8–11
 
 **Teesri Shikayat** ("the third complaint"): residents send Hindi voice notes about dirty tap water on Telegram. When 3 homes within 250 m report it inside 72 h, everyone enrolled nearby is warned, and only residents can close the case.
 
@@ -13,8 +13,9 @@ Last updated: Thu 08 Oct 2026, 13:30 IST · Event: WeMakeDevs × AWS Environment
 | Thu 13:05 | **Joining:** `/start <ward>` → location → consent buttons → joined. **Voice:** voice note → S3 → Transcribe hi-IN → Transcribe-finished event → Nova fills a fixed schema → code validates → report saved → Hindi text receipt + Polly Kajal voice. **Fallback:** if the model can't read it, the resident answers 3 button questions (colour, smell, since when); a failed read is never counted as clean. **Channel adapter:** Telegram today, the simulated phone wall uses the same interface. Re-delivered webhooks and double taps can't create a second report. | `90b5c38` | ✅ phone, 13:15: Transcribe heard "पानी गंदा है"; Nova refused (quota 0) → buttons → brown/smell/3 days → text + Kajal voice receipt |
 
 | Thu 13:30 | **Tripwire:** every new report → DynamoDB Streams → EventBridge Pipe (filter: `RPT#` inserts) → Tripwire Lambda (rule in code, no model). Fires when ≥3 different homes report dirty water within 72 h and every pair is within 250 m → `INC#` incident with "3 homes · 212 m · 71 h" numbers. All within 30 m (one building) → tank advice to those homes, no alarm. A report within 250 m of an open incident joins it. A report belongs to at most one incident (one DynamoDB transaction), so two simultaneous third reports make exactly one incident. Fallback wording fixed: "sorry, couldn't hear" only when nothing was heard. | `ca6d1ed` | ✅ live smoke test 13:28: 4 labelled test reports in Dongri → Pipe → `incident` (4 homes · 202 m · 50 h); test items deleted after |
+| Thu 15:10 | **Ring population:** `scripts/precompute_population.py` read a 3 km × 3 km window around Dongri from GHS-POP 2025 (100 m, `s3://jrc-ghsl`, Open Data on AWS) once into `src/teesri/data/ghs_pop_dongri.json`; the Lambda sums the part of each cell inside the ring. Incidents store `ring_pop`, or "NO DATA" (never 0). **Demo scenario:** `scripts/scenario.py reset [--mine] | seed | building | stand-in | status`. 22 simulated homes A–V around your pin (A and B already reported, demo clock ~71 h / 20 h ago, 212 m apart), one building 600 m north (3 flats). Homes are findable by place for ring warnings. | `e9b319d`, `587a38a` | ✅ live: A none, B none, stand-in third report → incident 3 homes · 212 m · 70.8 h · ~20,100 people; building → tank advice; reset after |
 
-**Tests:** 24 passing (`.venv/bin/python -m pytest -q`): tripwire (fire at 3 homes · 212 m · 71 h, one home 300 m away, 73 h span, same home ×3, clear water never counts, one building → tank advice once, 4th report joins, two simultaneous third reports → one incident, stream re-delivery), webhook secret, joining, declining deletes data, re-delivered updates ignored, model path, button fallback incl. double tap, voice before joining, geohash, distances, field validation, receipt text, "heard but no details" wording.
+**Tests:** 30 passing (`.venv/bin/python -m pytest -q`): demo story end to end (3 homes · 212 m · 71 h, 23 enrolled in the ring, 20 never complained), one building + reset keeps real homes, ring population (partial cells, NO DATA never 0), tripwire (fire at 3 homes · 212 m · 71 h, one home 300 m away, 73 h span, same home ×3, clear water never counts, one building → tank advice once, 4th report joins, two simultaneous third reports → one incident, stream re-delivery), webhook secret, joining, declining deletes data, re-delivered updates ignored, model path, button fallback incl. double tap, voice before joining, geohash, distances, field validation, receipt text, "heard but no details" wording.
 
 ## Live resources (AWS ap-south-1, stack `Teesri`)
 
@@ -37,7 +38,7 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
 
 | PK | SK | What |
 |---|---|---|
-| `HH#tg<chat_id>` | `PROFILE` | ward, lat, lon, consent_ts, channel |
+| `HH#tg<chat_id>` / `HH#sim-<x>` | `PROFILE` | ward, lat, lon, consent_ts, channel, (sim: is_simulated, label); GSI1 = `HGH6#<geohash6>` / hh_id |
 | `HH#sim-<x>` | `MSG#<ts>#<id>` | messages shown on the simulated phone wall |
 | `DRAFT#<rpt>` | `META` | a voice note waiting for button answers (TTL 1 day) |
 | `RPT#<hh>-<msg_id>` | `META` | hh_id, ts, lat, lon, colour, smell, since_days, illness, vulnerable, source (nova/buttons), transcript, inc_id once claimed; GSI1 = `GH6#<geohash6>` / ts |
@@ -49,7 +50,7 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
 ## Next (from the plan)
 
 1. ✅ Phone home pin set to Dongri, B ward (18.9622, 72.8368, OpenStreetMap) directly in the table: Telegram on a computer cannot send a chosen location. To change it from the phone app: 📎 → Location → search the place → tap it. The 13:15 test report stays at the old spot, outside any ring; clear test data before recording.
-2. **Thu night:** GHS-POP population for the ring ("~N people", "NO DATA" never 0); demo scenario script (22 simulated homes A–V, demo clock).
+2. ✅ Population + demo scenario (done Thu afternoon, ahead of plan).
 3. **Fri AM:** Step Functions case (named by incident id) → Strands agent brief → volunteer approval (task token) → Polly warning to every enrolled home in the ring + SES email to the ward office.
 4. **Fri PM:** Cedar on every action + Safety tab trace; ward office "resolved" → agent `close_case` DENY → check-ins → REOPENED / CLOSED_AT_TAP.
 5. **Fri night:** console (map + ring, phone wall, Safety tab, scenario button). **Sat 14:00 feature freeze**, then video.
