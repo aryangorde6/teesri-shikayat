@@ -1,20 +1,60 @@
 {
-  "_note": "Every number shown or spoken in the video, with where it comes from. Re-run the commands after the recording run and update.",
-  "indore_deaths": {"value": "36 deaths examined, 24 linked directly to sewage in the pipeline", "card": "Indore · Dec 2025 · 36 deaths",
-    "source": "ETV Bharat on the judicial commission report (Sep 2026; report not public): https://www.etvbharat.com/en/bharat/600-page-report-unravels-bhagirathpura-deaths-in-indore-enn26090102772",
-    "caveat": "Wikipedia lists 32 deaths (to 20 Feb 2026). The narration 'Thirty-six died' is stronger than 'examined 36 deaths'; consider 'Thirty-six deaths were examined' or show both."},
-  "indore_dates": {"value": "complaints from mid-December; Dec 25 bitter taste; Dec 27 first illness; Dec 29 deaths; 1,400+ ill",
-    "source": "https://en.wikipedia.org/wiki/2025_Indore_drinking_water_contamination (checked Thu 8 Oct 2026)"},
-  "indore_lead_days": {"value": "about 10 days", "source": "Reconstruction: assumed complaints Dec 15-17 -> alarm Dec 17 vs first illness Dec 27 (console Indore replay tab, labelled)"},
-  "mumbai_complaints": {"value": "1,514 contaminated-water complaints, Jan-Aug 2026",
-    "source": "https://www.freepressjournal.in/mumbai/mumbai-bmc-orders-24x7-action-on-contaminated-water-complaints-after-1514-cases-in-2026 (1 Oct 2026)"},
-  "bmc_sop": {"value": "BMC Standing Committee SOP, 30 Sep 2026: immediate alerts to residents", "source": "same Free Press Journal article"},
-  "b_ward_unfit": {"value": "4.03% unfit samples in B ward vs 0.28% citywide (2025-26)", "source": "same Free Press Journal article"},
-  "card_cluster": {"value": "3 homes · 212 m · 71 h", "source": "src/teesri/scenario.py (A-B 212 m apart, A ~70.75 h before the third report); live run Thu 8 Oct 15:37 showed 3 homes · 212 m · 70.8 h"},
-  "ring_population": {"value": "~20,100 people within 250 m", "source": "GHS-POP R2023A 2025 100 m (JRC, CC BY 4.0) via s3://jrc-ghsl; command: incident ring_pop / src/teesri/population.py ring_population(ring centre, 250); live incident ring_pop 20,074"},
-  "enrolled_in_ring": {"value": "23 enrolled homes, 20 never complained", "source": "22 simulated homes A-V + my phone (scenario.py); console wall caption"},
-  "nearest_hospital": {"value": "J. J. Hospital, ~370 m from the ring centre", "source": "OpenStreetMap way/803325198 (src/teesri/data/clinics_dongri.json)"},
-  "cost_per_incident": {"value": "about Rs 1 ($0.011)", "source": "scripts/cost_per_incident.py on the live run Thu 8 Oct 15:37 ($0.064 before making each Polly message once; same counts with the fix: ~$0.011). Re-run after the recording run for the final figure.",
-    "fx": "Rs 88/USD assumed"},
-  "tests": {"value": "48 tests", "source": ".venv/bin/python -m pytest -q"}
+ "_note": "Every number shown or spoken in the video, with where it comes from. Re-run the commands after the recording run and update.",
+ "indore_deaths": {
+  "value": "36 deaths examined, 24 linked directly to sewage in the pipeline",
+  "card": "Indore · Dec 2025 · 36 deaths",
+  "source": "ETV Bharat on the judicial commission report (Sep 2026; report not public): https://www.etvbharat.com/en/bharat/600-page-report-unravels-bhagirathpura-deaths-in-indore-enn26090102772",
+  "caveat": "Wikipedia lists 32 deaths (to 20 Feb 2026). The narration 'Thirty-six died' is stronger than 'examined 36 deaths'; consider 'Thirty-six deaths were examined' or show both."
+ },
+ "indore_dates": {
+  "value": "complaints from mid-December; Dec 25 bitter taste; Dec 27 first illness; Dec 29 deaths; 1,400+ ill",
+  "source": "https://en.wikipedia.org/wiki/2025_Indore_drinking_water_contamination (checked Thu 8 Oct 2026)"
+ },
+ "indore_lead_days": {
+  "value": "about 10 days",
+  "source": "Reconstruction: assumed complaints Dec 15-17 -> alarm Dec 17 vs first illness Dec 27 (console Indore replay tab, labelled)"
+ },
+ "mumbai_complaints": {
+  "value": "1,514 contaminated-water complaints, Jan-Aug 2026",
+  "source": "https://www.freepressjournal.in/mumbai/mumbai-bmc-orders-24x7-action-on-contaminated-water-complaints-after-1514-cases-in-2026 (1 Oct 2026)"
+ },
+ "bmc_sop": {
+  "value": "BMC Standing Committee SOP, 30 Sep 2026: immediate alerts to residents",
+  "source": "same Free Press Journal article"
+ },
+ "b_ward_unfit": {
+  "value": "4.03% unfit samples in B ward vs 0.28% citywide (2025-26)",
+  "source": "same Free Press Journal article"
+ },
+ "card_cluster": {
+  "value": "3 homes · 212 m · 71 h",
+  "source": "src/teesri/scenario.py (A-B 212 m apart, A ~70.75 h before the third report); live run Thu 8 Oct 15:37 showed 3 homes · 212 m · 70.8 h"
+ },
+ "ring_population": {
+  "value": "~20,100 people within 250 m",
+  "source": "GHS-POP R2023A 2025 100 m (JRC, CC BY 4.0) via s3://jrc-ghsl; command: incident ring_pop / src/teesri/population.py ring_population(ring centre, 250); live incident ring_pop 20,074"
+ },
+ "enrolled_in_ring": {
+  "value": "23 enrolled homes, 20 never complained",
+  "source": "22 simulated homes A-V + my phone (scenario.py); console wall caption"
+ },
+ "nearest_hospital": {
+  "value": "J. J. Hospital, ~370 m from the ring centre",
+  "source": "OpenStreetMap way/803325198 (src/teesri/data/clinics_dongri.json)"
+ },
+ "cost_per_incident": {
+  "value": "about Rs 1 ($0.011)",
+  "source": "scripts/cost_per_incident.py on the live run Thu 8 Oct 15:37 ($0.064 before making each Polly message once; same counts with the fix: ~$0.011). Re-run after the recording run for the final figure.",
+  "fx": "Rs 88/USD assumed",
+  "card": "₹1",
+  "detail": "24 homes warned, one reopen, about $0.011"
+ },
+ "tests": {
+  "value": "48 tests",
+  "source": ".venv/bin/python -m pytest -q"
+ },
+ "live_url": {
+  "value": "eirioqqhvtvve3aw5xhpje2wju0jztrl.lambda-url.ap-south-1.on.aws/console",
+  "source": "cdk deploy output FunctionUrl"
+ }
 }
