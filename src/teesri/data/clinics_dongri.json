@@ -1,0 +1,6 @@
+{"source": "OpenStreetMap (© OpenStreetMap contributors, ODbL), Overpass query Thu 8 Oct 2026",
+ "note": "Public facilities near the Dongri demo area; the warning names the nearest one.",
+ "clinics": [
+  {"name": "J. J. Hospital", "name_hi": "जे. जे. अस्पताल", "osm": "way/803325198", "lat": 18.9638574, "lon": 72.8347891},
+  {"name": "Municipality Clinic", "name_hi": "म्युनिसिपल क्लिनिक", "osm": "node/7206357770", "lat": 18.9637556, "lon": 72.8306024}
+ ]}

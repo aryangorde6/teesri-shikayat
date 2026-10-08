@@ -9,7 +9,7 @@ import hashlib
 import logging
 from datetime import datetime, timedelta, timezone
 
-from teesri import channel, extract, geo, population, store, texts, voice
+from teesri import channel, extract, geo, population, store, texts, voice, workflow
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -65,7 +65,9 @@ def decide(rpt: dict) -> tuple[str, dict]:
 
 
 def apply(rpt: dict, decision: str, d: dict) -> None:
-    if decision == "join":
+    if decision == "already":
+        workflow.start_case(d["inc_id"])  # idempotent: covers a crash between the incident write and the start
+    elif decision == "join":
         inc_id = d["inc"]["inc_id"]
         store.join_incident(inc_id, _rid(rpt), rpt["hh_id"])
         store.log_event("tripwire", decision="joined", inc_id=inc_id, rpt_id=_rid(rpt))
@@ -73,6 +75,7 @@ def apply(rpt: dict, decision: str, d: dict) -> None:
         inc = new_incident(rpt, d)
         store.create_incident(inc, sorted(inc["report_ids"]))
         store.log_event("tripwire", decision="incident", inc_id=inc["inc_id"], ring_pop=inc["ring_pop"], **inc["fired"])
+        workflow.start_case(inc["inc_id"])
     elif decision == "tank":
         advise_tank(d["members"])
         store.log_event("tripwire", decision="one_building", rpt_id=_rid(rpt), homes=d["homes"], spread_m=d["spread_m"])

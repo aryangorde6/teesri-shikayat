@@ -11,7 +11,7 @@ The phone's own voice note is the third report: 3 homes · 212 m · 71 h.
 import math
 from datetime import datetime, timedelta, timezone
 
-from teesri import channel, geo, store, texts, tripwire
+from teesri import channel, geo, store, texts, tripwire, workflow
 
 DONGRI = (18.9622, 72.8368)  # B ward, OpenStreetMap
 M_PER_DEG = 6_371_000 * math.pi / 180
@@ -53,14 +53,15 @@ def ring_centre() -> tuple[float, float]:
 
 
 def reset(mine: bool = False) -> dict:
-    """Removes simulated homes (and their wall messages and reports), all incidents, the feed and once-markers.
+    """Stops running cases, then removes simulated homes (their messages and reports), all incidents, the feed.
     Real homes stay enrolled. mine=True also removes real homes' reports, for a clean recording."""
-    prefixes = ("HH#sim-", "RPT#sim-", "DRAFT#sim-", "INC#", "ONCE#", "FEED") + (("RPT#tg", "DRAFT#tg") if mine else ())
+    prefixes = ("HH#sim-", "RPT#sim-", "DRAFT#sim-", "INC#", "ONCE#", "FEED", "TOK#", "CFG#") + (("RPT#tg", "DRAFT#tg") if mine else ())
+    stopped = workflow.stop_all_cases()
     keys = [(i["PK"], i["SK"]) for p in prefixes for i in store.scan_prefix(p, keys_only=True)]
     with store.table().batch_writer() as b:
         for pk, sk in keys:
             b.delete_item(Key={"PK": pk, "SK": sk})
-    return {"deleted": len(keys)}
+    return {"deleted": len(keys), "cases_stopped": stopped}
 
 
 def seed() -> dict:
@@ -86,9 +87,50 @@ def seed() -> dict:
     for name, n, e in BUILDING:
         enrol(f"sim-{name}", *_offset(blat, blon, n, e), f"Simulated building, flat {name[-1]}")
 
+    set_volunteer("phone" if real_homes() else "sim")
     for letter, (_, _, hours, transcript, fields) in PRIOR.items():
         file_report(f"sim-{letter}", fields, transcript, ts=_ago(hours))
-    return {"ring_homes": len(RING_HOMES), "building_homes": len(BUILDING), "prior_reports": list(PRIOR)}
+    return {"ring_homes": len(RING_HOMES), "building_homes": len(BUILDING), "prior_reports": list(PRIOR),
+            "volunteer": store.get_config("volunteer").get("hh_id")}
+
+
+def set_volunteer(who: str) -> str:
+    """"phone": your phone gets the volunteer card ("demo: my phone plays the volunteer").
+    "sim": a simulated volunteer on the phone wall, 300 m away (outside the ring), approved from the console/CLI."""
+    if who == "phone" and real_homes():
+        hh_id = real_homes()[0]["PK"].removeprefix("HH#")
+    else:
+        hh_id = "sim-vol"
+        store.upsert_household(hh_id, **dict(zip(("lat", "lon"), _offset(*anchor(), -300, 0))), ward="B", channel="sim",
+                               consent_ts=store.now_iso(), is_simulated=True, label="Simulated volunteer")
+    store.set_config("volunteer", hh_id=hh_id)
+    return hh_id
+
+
+def current_incident() -> dict | None:
+    open_incs = [i for i in store.scan_prefix("INC#") if i["SK"] == "META" and i.get("status") != "CLOSED_AT_TAP"]
+    return max(open_incs, key=lambda i: i["created_ts"], default=None)
+
+
+def approve(yes: bool = True) -> str:
+    """The simulated volunteer taps (only when the volunteer is simulated; a real volunteer taps on Telegram)."""
+    inc, vol = current_incident(), store.get_config("volunteer").get("hh_id", "")
+    if not inc or not vol.startswith("sim-"):
+        return "no open incident, or the volunteer is a real phone"
+    return workflow.approve(vol, inc.get("approve_tok", ""), yes)
+
+
+def ward_reply(text: str = "Resolved") -> bool:
+    inc = current_incident()
+    return bool(inc) and workflow.ward_reply(inc["inc_id"], text)
+
+
+def answer(home: str, clean: bool) -> str:
+    """A simulated home answers "पानी साफ़ है?". Real homes answer on their own phones."""
+    inc = current_incident()
+    if not inc:
+        return "no open incident"
+    return workflow.answer_checkin(f"sim-{home}", inc.get("checkin_tok", ""), clean)
 
 
 def file_report(hh_id: str, fields: dict, transcript: str, ts: str | None = None) -> str:

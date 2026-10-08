@@ -73,8 +73,8 @@ def once_per(key: str, seconds: int) -> bool:
 
 def log_event(kind: str, **data) -> None:
     """One feed for the console: tripwire decisions, warnings, closures."""
-    ts = now_iso()
-    table().put_item(Item=_dec({"PK": "FEED", "SK": f"{ts}#{new_id()}", "kind": kind, "ts": ts, **data}))
+    ts = now_iso()  # the nanosecond part keeps same-second entries in the order they happened
+    table().put_item(Item=_dec({"PK": "FEED", "SK": f"{ts}#{time.time_ns()}", "kind": kind, "ts": ts, **data}))
 
 
 def scan_prefix(prefix: str, keys_only: bool = False) -> list[dict]:
@@ -247,3 +247,66 @@ def _claim(rpt_id: str, inc_id: str) -> dict:
 
 def get_incident(inc_id: str) -> dict | None:
     return table().get_item(Key={"PK": f"INC#{inc_id}", "SK": "META"}, ConsistentRead=True).get("Item")
+
+
+def update_incident(inc_id: str, **attrs) -> None:
+    attrs = _dec({**attrs, "updated_ts": now_iso()})
+    table().update_item(
+        Key={"PK": f"INC#{inc_id}", "SK": "META"},
+        UpdateExpression="SET " + ", ".join(f"#{k} = :{k}" for k in attrs),
+        ExpressionAttributeNames={f"#{k}": k for k in attrs},
+        ExpressionAttributeValues={f":{k}": v for k, v in attrs.items()},
+    )
+
+
+def log_evt(inc_id: str, **data) -> None:
+    """One guardrail decision or case step, shown on the Safety tab."""
+    ts = now_iso()
+    table().put_item(Item=_dec({"PK": f"INC#{inc_id}", "SK": f"EVT#{ts}#{time.time_ns()}", "ts": ts, **data}))
+
+
+def events(inc_id: str) -> list[dict]:
+    return table().query(KeyConditionExpression=Key("PK").eq(f"INC#{inc_id}") & Key("SK").begins_with("EVT#"))["Items"]
+
+
+# --- Step Functions task tokens (Telegram callback data holds only the short id) --------------------
+
+def put_token(task_token: str, inc_id: str, step: str, **extra) -> str:
+    short = secrets.token_hex(4)
+    table().put_item(Item=_dec({"PK": f"TOK#{short}", "SK": "META", "task_token": task_token, "inc_id": inc_id,
+                                "step": step, "ttl": int(time.time()) + 14 * 86400, **extra}))
+    return short
+
+
+def get_token(short: str) -> dict | None:
+    return table().get_item(Key={"PK": f"TOK#{short}", "SK": "META"}).get("Item")
+
+
+# --- check-ins: one answer per home per round, first answer wins ------------------------------------
+
+def put_checkin(inc_id: str, rnd: int, hh_id: str, clean: bool) -> bool:
+    try:
+        table().put_item(
+            Item={"PK": f"INC#{inc_id}", "SK": f"CHK#{rnd:02d}#{hh_id}", "hh_id": hh_id, "clean": clean, "ts": now_iso()},
+            ConditionExpression="attribute_not_exists(PK)",
+        )
+        return True
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+            return False
+        raise
+
+
+def checkins(inc_id: str, rnd: int) -> list[dict]:
+    return table().query(KeyConditionExpression=Key("PK").eq(f"INC#{inc_id}")
+                         & Key("SK").begins_with(f"CHK#{rnd:02d}#"))["Items"]
+
+
+# --- config (demo volunteer etc.) -------------------------------------------------------------------
+
+def get_config(name: str) -> dict:
+    return table().get_item(Key={"PK": f"CFG#{name}", "SK": "META"}).get("Item") or {}
+
+
+def set_config(name: str, **attrs) -> None:
+    table().put_item(Item=_dec({"PK": f"CFG#{name}", "SK": "META", **attrs}))

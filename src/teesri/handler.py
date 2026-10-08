@@ -7,7 +7,7 @@ import hmac
 import json
 import logging
 
-from teesri import channel, extract, store, telegram, texts, voice
+from teesri import channel, extract, store, telegram, texts, voice, workflow
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -99,6 +99,10 @@ def on_button(cq: dict) -> None:
         return on_consent(hh_id, rest[0] == "yes")
     if kind == "fb" and len(rest) == 3:
         return on_fallback_answer(hh_id, *rest)
+    if kind == "ap" and len(rest) == 2:  # volunteer: हाँ, भेजें / अभी नहीं
+        return channel.send_text(hh_id, workflow.approve(hh_id, rest[0], rest[1] == "y"))
+    if kind == "ck" and len(rest) == 2:  # resident: पानी साफ़ है? हाँ / नहीं
+        return channel.send_text(hh_id, workflow.answer_checkin(hh_id, rest[0], rest[1] == "y"))
 
 
 def on_consent(hh_id: str, yes: bool) -> None:
