@@ -294,7 +294,7 @@ function caseHtml(s) {
     return `<span class="${c}">${esc(label)}</span>`;
   }).join("");
   return `<div class="steps">${steps}</div>
-    <div class="label">Case agent's brief to the volunteer ${inc.brief_mode === "template" ? "(template mode)" : ""} ${s.volunteer === "phone-1" ? "· demo: my phone plays the volunteer" : ""}</div>
+    <div class="label">Case agent's brief to the volunteer ${inc.brief_mode === "template" ? "(template mode)" : `(${inc.model})`} ${s.volunteer === "phone-1" ? "· demo: my phone plays the volunteer" : ""}</div>
     <div class="brief">${esc(inc.brief_hi) || "…"}</div>
     ${inc.claim ? `<div class="label">Ward office reply</div><div class="brief" style="border-color:var(--amber)">“${esc(inc.claim)}” — only residents can close the case</div>` : ""}
     ${feedHtml(s)}`;

@@ -128,7 +128,8 @@ def notify_water_board(inc_id: str, f: dict, case_file: dict, llm=None) -> str |
                                  "B Ward, Mumbai, about possible tap-water contamination, asking for an inspection and "
                                  "water testing. Use get_case_facts, then send_evidence_email. Include what helps the "
                                  "office act: the case id, the area, how many homes reported, how far apart and over "
-                                 "how many hours, and what residents reported. Sign as 'Teesri Shikayat (resident alert system; not affiliated with BMC)'."))
+                                 "how many hours (times in IST), and what residents reported. Plain text only: no Markdown, no "
+                                 "asterisks, no placeholders. Sign as 'Teesri Shikayat (resident alert system; not affiliated with BMC)'."))
     _run(agent, "Write and send the complaint for this case.")
     return sent.get("via")
 
@@ -146,7 +147,8 @@ def handle_authority_reply(inc_id: str, f: dict, reply: dict, llm=None) -> bool:
         if (stop := budget.spend()):
             return stop
         if not policy.check("case_agent", "close_case", res, inc_id):
-            return "DENIED by policy only-residents-close: only residents can close a case."
+            return ("DENIED by policy only-residents-close: only residents can close a case. "
+                    "To find out whether the water is really clean, ask them with schedule_checkins.")
         did.add("close_case")
         return "Closed."
 

@@ -189,6 +189,7 @@ def on_transcribed(detail: dict) -> None:
         transcript, key = voice.read_transcript(name)
     log.info("transcript %s: %s", rpt_id, transcript)
     fields, source = extract.read(transcript)  # the model, then the keyword reader for anything it left out
+    log.info("fields %s (read by %s): %s", rpt_id, source, json.dumps(fields, ensure_ascii=False))
     if fields:
         return finalize(rpt_id, hh, fields, source, transcript, key)
     store.put_draft(rpt_id, hh_id=hh_id, transcript=transcript, transcript_key=key)

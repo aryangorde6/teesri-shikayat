@@ -22,11 +22,15 @@ def _agent(goal: str, inc_id: str, run):
     from teesri import selfhost
     selfhost.start_budget(GOAL_BUDGET_S)  # leaves the case Lambda time to fall back to the template
     try:
-        return run()
+        out = run()
     except Exception as e:
         log.exception("agent %s failed", goal)
         store.log_evt(inc_id, actor="case_agent", action=goal, decision="FALLBACK", reason=f"template used: {type(e).__name__}")
         return None
+    if not out:
+        store.log_evt(inc_id, actor="case_agent", action=goal, decision="FALLBACK",
+                      reason="template used: the agent did not finish its goal")
+    return out
 AREA = os.environ.get("AREA_NAME", "Dongri, B ward, Mumbai")
 _IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -72,7 +76,8 @@ def case_file(inc_id: str, f: dict) -> dict:
         if hh_id.startswith("tg"):
             return f"Telegram chat {hh_id[2:]}"
         return f"+91 00000 {int(hashlib.sha1(hh_id.encode()).hexdigest(), 16) % 100000:05d}"  # simulated: invalid on purpose
-    return {**f, "reporters": [{"report": f"R{i}", "contact": contact(r["hh_id"])} for i, r in enumerate(reps, 1)]}
+    return {**f, "area": AREA, "first_report_ist": _ist(reps[0]["ts"]), "last_report_ist": _ist(reps[-1]["ts"]),
+            "reporters": [{"report": f"R{i}", "contact": contact(r["hh_id"])} for i, r in enumerate(reps, 1)]}
 
 
 def notify_water_board(inc_id: str, f: dict) -> str | None:

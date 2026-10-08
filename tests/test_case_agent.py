@@ -70,7 +70,8 @@ def test_agent_believes_the_ward_office_tries_to_close_and_is_denied(env, monkey
                     ("notify_volunteer", {"message_hi": "वार्ड ऑफिस ने ठीक बताया; घरों से पूछ रहे हैं।"})])
     assert case_agent.handle_authority_reply(inc_id, f, {"text": "Resolved"}, llm=llm) is True
     assert evts(inc_id, "close_case") == [("case_agent", "DENY", "only-residents-close")]
-    assert llm.results[0] == "DENIED by policy only-residents-close: only residents can close a case."
+    assert llm.results[0].startswith("DENIED by policy only-residents-close: only residents can close a case.")
+    assert "schedule_checkins" in llm.results[0]  # the DENY tells the agent how to recover
     assert env[-1] == ("tg42", "वार्ड ऑफिस ने ठीक बताया; घरों से पूछ रहे हैं।")
 
 

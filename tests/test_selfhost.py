@@ -5,7 +5,7 @@ import time
 import zlib
 
 import pytest
-from strands import Agent
+from strands import Agent, tool
 
 from teesri import extract, selfhost, store
 
@@ -66,12 +66,55 @@ def test_goal_budget_stops_calls(model_up):
         selfhost.call("/v1/chat/completions", {})
 
 
+def completion(content="", tool_calls=None, finish="stop"):
+    msg = {"role": "assistant", "content": content, **({"tool_calls": tool_calls} if tool_calls else {})}
+    return 200, "application/json", json.dumps({"choices": [{"index": 0, "message": msg, "finish_reason": finish}],
+                                                "usage": {"prompt_tokens": 5, "completion_tokens": 2, "total_tokens": 7}})
+
+
 def test_strands_agent_talks_to_the_model_through_the_queue(model_up):
-    chunks = [{"choices": [{"index": 0, "delta": {"role": "assistant", "content": "ठीक है"}, "finish_reason": None}]},
-              {"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
-               "usage": {"prompt_tokens": 5, "completion_tokens": 2, "total_tokens": 7}}]
-    sse = "".join(f"data: {json.dumps(c, ensure_ascii=False)}\n\n" for c in chunks) + "data: [DONE]\n\n"
-    w = model_up(lambda req: (200, "text/event-stream", sse))
+    w = model_up(lambda req: completion("ठीक है"))
     result = Agent(model=selfhost.strands_model(), callback_handler=None)("नमस्ते")
     assert str(result).strip() == "ठीक है"
-    assert w.requests[0]["path"] == "/v1/chat/completions" and w.requests[0]["body"]["stream"] is True
+    body = w.requests[0]["body"]
+    assert w.requests[0]["path"] == "/v1/chat/completions" and "stream" not in body  # asked for whole, replayed
+
+
+def test_strands_agent_runs_tools_through_the_queue(model_up):
+    seen = []
+
+    @tool
+    def get_case_facts() -> str:
+        """Everything known about this case."""
+        seen.append("facts")
+        return '{"homes": 3}'
+
+    replies = iter([completion(tool_calls=[{"id": "c1", "type": "function",
+                                            "function": {"name": "get_case_facts", "arguments": "{}"}}], finish="tool_calls"),
+                    completion("3 घर")])
+    w = model_up(lambda req: next(replies))
+    result = Agent(model=selfhost.strands_model(), callback_handler=None, tools=[get_case_facts])("facts?")
+    assert seen == ["facts"] and str(result).strip() == "3 घर"
+    assert w.requests[1]["body"]["messages"][-1]["role"] == "tool"
+
+
+def test_a_tool_call_written_as_text_is_asked_again_with_the_grammar(model_up):
+    seen = []
+
+    @tool
+    def get_case_facts() -> str:
+        """Everything known about this case."""
+        seen.append("facts")
+        return '{"homes": 3}'
+
+    def reply(req):
+        if req["body"].get("tool_choice") == "required":
+            return completion(tool_calls=[{"id": "c1", "type": "function",
+                                           "function": {"name": "get_case_facts", "arguments": "{}"}}], finish="tool_calls")
+        if req["body"]["messages"][-1]["role"] == "tool":
+            return completion("3 घर")
+        return completion("get_case_facts{}")  # what Gemma sometimes writes
+    w = model_up(reply)
+    result = Agent(model=selfhost.strands_model(), callback_handler=None, tools=[get_case_facts])("facts?")
+    assert seen == ["facts"] and str(result).strip() == "3 घर"
+    assert [r["body"].get("tool_choice") for r in w.requests] == [None, "required", None]

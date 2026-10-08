@@ -81,6 +81,7 @@ def state() -> dict:
             "ring_m": int(inc["ring_m"]), "fired": inc["fired"], "ring_pop": inc["ring_pop"],
             "homes": len(members), "ring_homes": len(ring_hh), "brief_hi": inc.get("brief_hi", ""),
             "brief_mode": inc.get("brief_mode", ""), "claim": inc.get("claim", ""),
+            "model": "Gemma 4 on our EC2 instance" if os.environ.get("MODEL_BACKEND") == "selfhost" else "Amazon Nova",
             "reopen_count": int(inc.get("reopen_count", 0)), "checkin_round": int(inc.get("checkin_round", 0)),
             "created_ts": inc["created_ts"],
         }
