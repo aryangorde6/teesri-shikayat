@@ -117,3 +117,9 @@ def test_heard_but_no_details_asks_without_apologising(env, monkeypatch):
     monkeypatch.setattr(extract, "extract", lambda t: None)  # model unavailable or nothing classifiable
     handler.main({"source": "aws.transcribe", "detail": {"TranscriptionJobName": f"vn_{ME}_79", "TranscriptionJobStatus": "COMPLETED"}}, None)
     assert env[-1][2] == texts.ASK_COLOUR
+
+
+def test_stop_deletes_the_home(env):
+    join()
+    post(msg(text="बंद"))
+    assert store.get_household(ME) is None and env[-1][2] == texts.LEFT

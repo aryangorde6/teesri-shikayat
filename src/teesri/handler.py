@@ -67,6 +67,9 @@ def on_update(update: dict) -> None:
     hh_id = f"tg{msg['chat']['id']}"
     if msg.get("text", "").startswith("/start"):
         return on_start(hh_id, msg["text"])
+    if msg.get("text", "").strip().lower() in ("/stop", "बंद", "band"):
+        store.delete_household(hh_id)  # leave any time; nothing about the home is kept
+        return channel.send_text(hh_id, texts.LEFT)
     if "location" in msg:
         return on_location(hh_id, msg["location"])
     if "voice" in msg:
