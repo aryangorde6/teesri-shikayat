@@ -1,6 +1,6 @@
 # State: what's built so far
 
-Last updated: Thu 08 Oct 2026, 22:00 IST · Event: WeMakeDevs × AWS Environmental Hacks (Heat and Water), Oct 8–11
+Last updated: Thu 08 Oct 2026, 23:28 IST · Event: WeMakeDevs × AWS Environmental Hacks (Heat and Water), Oct 8–11
 
 **Teesri Shikayat** ("the third complaint"): residents send Hindi voice notes about dirty tap water on Telegram. When 3 homes within 250 m report it inside 72 h, everyone enrolled nearby is warned, and only residents can close the case.
 
@@ -76,7 +76,7 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
 1. ✅ Thu: voice pipeline, tripwire, population, demo scenario, case workflow, Cedar, console, Indore replay, README, cost, QR, preflight, writeup draft, slide cards, narration scripts + Colab notebook, video assembler, real-phone rehearsal (18:41).
 2. ✅ Real-phone rehearsal passed 18:41 (see Done). With the stand-in the ring has 24 homes (24 warned, 21 never complained); in the recording run the phone files the third report itself, so it is 23 / 20, matching the shot 9 caption.
 3. ✅ **Agent mode works now, on our own model** (no Bedrock needed; the Fri 10:00 cutoff is gone). Record in agent mode: `scenario.py model on` before (≈1 min), `model off` after. Template mode stays as the fallback if the instance can't run. If Bedrock quota ever arrives: `MODEL_BACKEND=bedrock` in `infra/stack.py`.
-   - Re-render the agent animatic from the 21:43 tour take: `.venv/bin/python scripts/build_video.py --out video/out/animatic-agent.mp4` (the 21:45 render was killed by the system, exit 137, most likely out of memory: this machine has 7 GB; close Chrome/other apps first). `video/out/animatic-agent.mp4` on disk is from the first take (21:31) and shows the PII DENY → FALLBACK rows.
+   - ✅ Agent animatic re-rendered 23:26 from the 21:43 tour take: `video/out/animatic-agent.mp4` (2:47.8) + `-720p.mp4`. Checked: shot 10 shows the agent's plain-text ward email (real area and IST times) and a Safety tab of ALLOWs; the `close_case` DENY lands in shot 11. The earlier exit 137 was `/tmp` being RAM (tmpfs) here: `build_video.py` now keeps its scratch files in `video/out/.build-*` (deleted after) and caps x264 at 4 threads.
 4. **Needs Aryan:**
    - (a) ✅ Telegram Web linked (18:37).
    - (b) Optional now: the AWS support reply in `~/aws_environment/SEND-QUEUE.md` (the demo no longer needs Bedrock).
@@ -89,7 +89,7 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
 ## Open issues
 
 - **Bedrock quota is 0** for every model and region tried (re-probed 19:50). Quota requests for Nova 2 Lite still `CASE_OPENED`. Worked around: the model runs on our own EC2 instance (see Done 19:50–21:19).
-- **Model instance cost:** $0.43/h while running; it stops itself after an idle hour. Turn it on only for rehearsals/recording. At 22:00 it was still running (last used 21:43), so it should stop by itself around 22:45; `scenario.py model off` stops it at once.
+- **Model instance cost:** $0.43/h while running; it stops itself after an idle hour. Turn it on only for rehearsals/recording. It stopped itself after the 21:43 tour (seen `stopped` at 23:23); `scenario.py model off` stops it at once.
 - **Agent behaviour varies run to run:** sometimes Gemma puts the reporters' contacts into the ward email, so a `send_evidence_email` DENY → redraft appears on the Safety tab, and sometimes it doesn't. The slot 10 narration ("Names and numbers never leave the lane. Cedar enforces that.") is true either way. Check the Safety tab after the recording run before writing any caption about it.
 - **Deadline hour still TBA:** schedule page re-checked Thu 17:50 ("the hours are being finalised"). Rules page: a submission is a public repo, a YouTube video up to 3 minutes (public or unlisted), and a short writeup (problem, build, where AWS fits); the form closes hard. Form link and fields not published yet.
 - Telegram Desktop can't be driven from this machine (Wayland, no automation); phone steps go through Telegram Web in Chrome (linked 18:37). Recording still needs the real phone screen (shots 5, 6, 8, 9, 11).

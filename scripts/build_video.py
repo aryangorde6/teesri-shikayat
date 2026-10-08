@@ -26,7 +26,7 @@ MODE = arg("--mode", "agent")
 VOICE, SUBS, ONLY = arg("--voice"), arg("--subs"), arg("--only")
 OUT = ROOT / arg("--out", "video/out/teesri.mp4")
 W, H, FPS, BG = 1920, 1080, 30, "0x0f1419"
-VENC = ["-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-r", str(FPS)]
+VENC = ["-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p", "-r", str(FPS), "-threads", "4"]
 
 
 def pick(d: dict, key: str, default=None):
@@ -187,7 +187,8 @@ def main() -> None:
     beats = {b["beat"]: b["t"] for b in json.loads(beats_path.read_text())} if beats_path.exists() else {}
     shots = [s for s in edl["shots"] if not ONLY or str(s["n"]) == ONLY]
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory() as td:
+    # scratch files go next to the output, not /tmp: on a machine where /tmp is RAM, 1080p intermediates got the render killed
+    with tempfile.TemporaryDirectory(dir=OUT.parent, prefix=".build-") as td:
         tmp = pathlib.Path(td)
         text = Text(tmp)
         try:

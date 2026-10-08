@@ -50,7 +50,7 @@
   "detail": "24 homes warned, one reopen, about $0.011"
  },
  "tests": {
-  "value": "55 tests",
+  "value": "64 tests",
   "source": ".venv/bin/python -m pytest -q"
  },
  "live_url": {
