@@ -29,7 +29,7 @@ The demo uses 22 simulated homes on a phone wall, labelled on screen, plus my re
 - **Strands Agents SDK** runs the case agent's three goals: brief the volunteer, write to the ward office, handle the ward office's reply. It has at most 6 tool calls per goal and falls back to fixed templates on any error.
 - **Cedar** (cedarpy) holds 8 policies, including only-residents-close and no-PII-to-authority.
 - **Polly** (Kajal, neural Hindi) speaks the warnings, synthesised once per incident and reused.
-- **SES** sends the ward office email.
+- **SES** sends the ward office email once a verified inbox is set. The demo uses a test inbox shown on the console.
 - **Open Data on AWS:** GHS-POP 2025 (100 m), read from the JRC bucket, gives the population of each ring (~20,100 people in the demo ring).
 - **CDK (Python)** deploys everything as one stack in ap-south-1. Secrets live in SSM Parameter Store.
 - **Cost:** one incident (24 homes warned, one reopen) costs about ₹1 ($0.011), measured from a live run's Step Functions history and Lambda logs and priced with the AWS Pricing API.

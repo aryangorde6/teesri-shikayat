@@ -1,6 +1,6 @@
 # State: what's built so far
 
-Last updated: Thu 08 Oct 2026, 18:06 IST · Event: WeMakeDevs × AWS Environmental Hacks (Heat and Water), Oct 8–11
+Last updated: Thu 08 Oct 2026, 18:05 IST · Event: WeMakeDevs × AWS Environmental Hacks (Heat and Water), Oct 8–11
 
 **Teesri Shikayat** ("the third complaint"): residents send Hindi voice notes about dirty tap water on Telegram. When 3 homes within 250 m report it inside 72 h, everyone enrolled nearby is warned, and only residents can close the case.
 
