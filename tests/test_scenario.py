@@ -1,4 +1,5 @@
 from teesri import geo, scenario, store, tripwire
+from teesri.channel import send_text as real_send_text  # before the fixture swaps it out
 
 DIRTY = {"colour": "brown", "smell": True, "since_days": 2, "illness": [], "vulnerable": []}
 
@@ -36,3 +37,16 @@ def test_one_building_gives_tank_advice_and_reset_keeps_real_homes(env):
     scenario.reset()
     assert store.scan_prefix("HH#sim-") == [] and store.scan_prefix("RPT#") == [] and store.scan_prefix("FEED") == []
     assert store.is_enrolled(store.get_household("tg42"))
+
+
+def test_quiet_mode_holds_back_real_phones_only(env, monkeypatch):
+    from teesri import telegram
+    sent = []
+    monkeypatch.setattr(telegram, "send_message", lambda chat, text, **kw: sent.append(chat))
+    scenario.set_quiet(True)
+    real_send_text("tg42", "hello")
+    real_send_text("sim-A", "hello")
+    assert sent == [] and store.scan_prefix("HH#sim-A")  # the wall still gets it
+    scenario.set_quiet(False)
+    real_send_text("tg42", "hello")
+    assert sent == [42]
