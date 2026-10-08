@@ -127,11 +127,49 @@ dialog input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid 
       <button data-tab="case">Case</button>
       <button data-tab="safety">Safety<span id="denyCount" class="count">0</span></button>
       <button data-tab="inbox">Test inbox</button>
+      <button data-tab="indore">Indore replay</button>
     </div>
     <div id="wall" class="pane on"></div>
     <div id="case" class="pane"></div>
     <div id="safety" class="pane"></div>
     <div id="inbox" class="pane"></div>
+    <div id="indore" class="pane">
+      <div class="chip amber" style="display:inline-block;margin-bottom:10px">RECONSTRUCTION · counterfactual, not what happened</div>
+      <div style="font-size:17px;font-weight:700">Indore, Bhagirathpura · December 2025</div>
+      <div style="color:var(--muted);font-size:13px;margin:4px 0 12px">If the first three close-by complaints had been grouped, when would the alarm have gone off?</div>
+      <svg viewBox="0 0 640 210" width="100%" role="img" aria-label="Timeline: tripwire alarm around 17 December, first illness 27 December">
+        <line x1="20" y1="120" x2="620" y2="120" stroke="var(--line)" stroke-width="3"/>
+        <g font-family="JetBrains Mono, monospace" font-size="11" fill="var(--muted)" text-anchor="middle">
+          <text x="20" y="142">Dec 12</text><text x="140" y="142">15</text><text x="260" y="142">18</text><text x="380" y="142">21</text>
+          <text x="500" y="142">24</text><text x="620" y="142">27</text>
+        </g>
+        <rect x="140" y="108" width="80" height="24" rx="4" fill="var(--amber-bg)" stroke="var(--amber)"/>
+        <text x="180" y="100" text-anchor="middle" font-size="11.5" fill="var(--amber)">3 complaints (assumed)</text>
+        <circle cx="220" cy="120" r="9" fill="#ef4444"/>
+        <text x="220" y="70" text-anchor="middle" font-size="13" font-weight="700" fill="#ef4444">tripwire alarm</text>
+        <text x="220" y="86" text-anchor="middle" font-size="11.5" fill="var(--muted)">≈ Dec 17</text>
+        <circle cx="540" cy="120" r="6" fill="var(--muted)"/>
+        <text x="540" y="168" text-anchor="middle" font-size="11.5" fill="var(--muted)">Dec 25 bitter taste</text>
+        <circle cx="620" cy="120" r="9" fill="var(--text)"/>
+        <text x="612" y="70" text-anchor="end" font-size="13" font-weight="700" fill="var(--text)">first illness</text>
+        <text x="612" y="86" text-anchor="end" font-size="11.5" fill="var(--muted)">Dec 27 (deaths from Dec 29)</text>
+        <path d="M220 190 L620 190" stroke="var(--green)" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
+        <defs><marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="var(--green)"/></marker></defs>
+        <text x="420" y="184" text-anchor="middle" font-size="13" font-weight="700" fill="var(--green)">≈ 10 days of warning</text>
+      </svg>
+      <div class="label">What happened (sources)</div>
+      <div class="feed">
+        <div>Mid-December: residents noticed discoloured, foul-smelling tap water and repeatedly reported it to civic officials.</div>
+        <div>Dec 25: many households noticed a bitter taste and strong odour, and kept drinking it for lack of alternatives.</div>
+        <div>Dec 27: first cases of vomiting and diarrhoea. Dec 29: the mayor confirmed deaths. Over 1,400 people had symptoms.</div>
+        <div>Cause: a police-outpost toilet built over the drinking-water pipeline, without a septic tank.</div>
+        <div>A judicial commission examined 36 deaths and linked 24 directly to sewage in municipal pipelines (as reported by ETV Bharat, Sep 2026; the report is not public). Wikipedia lists 32 deaths.</div>
+      </div>
+      <div class="label">Reconstruction assumptions</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5">Individual complaint dates are not public. The replay assumes three homes on one lane complained on Dec 15, 16 and 17 ("mid-December"), within 250 m and 72 h, so the tripwire would fire on Dec 17.
+      Sources: <a style="color:var(--blue)" href="https://en.wikipedia.org/wiki/2025_Indore_drinking_water_contamination" target="_blank" rel="noopener">Wikipedia</a> ·
+      <a style="color:var(--blue)" href="https://www.etvbharat.com/en/bharat/600-page-report-unravels-bhagirathpura-deaths-in-indore-enn26090102772" target="_blank" rel="noopener">ETV Bharat</a></div>
+    </div>
   </section>
 </main>
 <footer>Simulated homes A–V are labelled as such; "My phone" is the only real one. Not affiliated with BMC or any water board. Population: GHS-POP 2025 (European Commission JRC, CC BY 4.0) via the Registry of Open Data on AWS. Map © OpenStreetMap contributors.</footer>
