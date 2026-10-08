@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 import boto3
-from boto3.dynamodb.conditions import Key
+from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError
 
 from teesri import geo
@@ -77,6 +77,20 @@ def log_event(kind: str, **data) -> None:
     table().put_item(Item=_dec({"PK": "FEED", "SK": f"{ts}#{new_id()}", "kind": kind, "ts": ts, **data}))
 
 
+def scan_prefix(prefix: str, keys_only: bool = False) -> list[dict]:
+    """Every item whose PK starts with prefix. Demo-scale admin use only (scenario, reset), never per request."""
+    kw = {"FilterExpression": Attr("PK").begins_with(prefix)}
+    if keys_only:
+        kw["ProjectionExpression"] = "PK, SK"
+    out = []
+    while True:
+        page = table().scan(**kw)
+        out += page["Items"]
+        if "LastEvaluatedKey" not in page:
+            return out
+        kw["ExclusiveStartKey"] = page["LastEvaluatedKey"]
+
+
 # --- households -------------------------------------------------------------
 
 def get_household(hh_id: str) -> dict | None:
@@ -84,6 +98,8 @@ def get_household(hh_id: str) -> dict | None:
 
 
 def upsert_household(hh_id: str, **attrs) -> None:
+    if "lat" in attrs and "lon" in attrs:  # findable by place, for warnings to everyone in a ring
+        attrs.update(GSI1PK=f"HGH6#{geo.geohash(float(attrs['lat']), float(attrs['lon']))}", GSI1SK=hh_id)
     attrs = _dec(attrs)
     names = {f"#{k}": k for k in attrs}
     values = {f":{k}": v for k, v in attrs.items()}
@@ -173,6 +189,13 @@ def reports_near(lat: float, lon: float, since: str) -> list[dict]:
 
 def incidents_near(lat: float, lon: float) -> list[dict]:
     return _query_cells("IGH6", lat, lon)
+
+
+def households_near(lat: float, lon: float, radius_m: float) -> list[dict]:
+    """Enrolled homes within radius_m (consent given), nearest first."""
+    homes = [h for h in _query_cells("HGH6", lat, lon) if is_enrolled(h)
+             and geo.distance_m(lat, lon, float(h["lat"]), float(h["lon"])) <= radius_m]
+    return sorted(homes, key=lambda h: geo.distance_m(lat, lon, float(h["lat"]), float(h["lon"])))
 
 
 # --- incidents ----------------------------------------------------------------

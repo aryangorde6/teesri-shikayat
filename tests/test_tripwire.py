@@ -1,38 +1,11 @@
 import itertools
 import math
 
-import boto3
-import pytest
-from moto import mock_aws
-
-from teesri import channel, population, store, texts, tripwire, voice
+from teesri import population, store, texts, tripwire
 
 LAT, LON = 18.9622, 72.8368  # Dongri, B ward, Mumbai (OpenStreetMap)
 M_PER_DEG = 6_371_000 * math.pi / 180
 _n = itertools.count()
-
-
-@pytest.fixture
-def env(monkeypatch):
-    monkeypatch.setenv("AWS_DEFAULT_REGION", "ap-south-1")
-    monkeypatch.setenv("TABLE", "t")
-    with mock_aws():
-        s = "S"
-        boto3.resource("dynamodb").create_table(
-            TableName="t", BillingMode="PAY_PER_REQUEST",
-            KeySchema=[{"AttributeName": "PK", "KeyType": "HASH"}, {"AttributeName": "SK", "KeyType": "RANGE"}],
-            AttributeDefinitions=[{"AttributeName": a, "AttributeType": s} for a in ("PK", "SK", "GSI1PK", "GSI1SK")],
-            GlobalSecondaryIndexes=[{
-                "IndexName": "GSI1", "Projection": {"ProjectionType": "ALL"},
-                "KeySchema": [{"AttributeName": "GSI1PK", "KeyType": "HASH"}, {"AttributeName": "GSI1SK", "KeyType": "RANGE"}],
-            }],
-        )
-        monkeypatch.setattr(store, "_table", None)
-        sent = []
-        monkeypatch.setattr(channel, "send_text", lambda hh, text, **kw: sent.append((hh, text)))
-        monkeypatch.setattr(channel, "send_voice", lambda hh, mp3, **kw: None)
-        monkeypatch.setattr(voice, "speak", lambda text: b"mp3")
-        yield sent
 
 
 def report(home, north_m=0.0, east_m=0.0, h=0.0, dirty=True):
