@@ -87,6 +87,7 @@ def ring(e):
     inc = _inc(e)
     homes = [h["PK"].removeprefix("HH#") for h in store.households_near(float(inc["lat"]), float(inc["lon"]), tripwire.RING_M)]
     store.update_incident(inc["inc_id"], ring_hh=homes, status="WARNING")
+    make_audio(inc["inc_id"], "ring_warning_v1", warning_text(inc))
     return {"homes": homes}
 
 
@@ -173,6 +174,8 @@ def evaluate(e):
 def reopened(e):
     inc = _inc(e)
     store.update_incident(inc["inc_id"], status="REOPENED", reopen_count=int(inc.get("reopen_count", 0)) + 1)
+    if inc.get("reopen_count", 0) == 0:
+        make_audio(inc["inc_id"], "reopened_v1", texts.REOPENED)
     for hh_id in inc.get("ring_hh", []):
         hh = store.get_household(hh_id)
         enrolled = store.is_enrolled(hh)
@@ -211,14 +214,29 @@ def _status(status: str):
 _audio: dict[str, bytes] = {}
 
 
+def _audio_key(inc_id: str, template: str) -> str:
+    return f"audio/{inc_id}/{template}.mp3"
+
+
+def make_audio(inc_id: str, template: str, text: str) -> None:
+    """One Polly call per incident and template, before the fan-out; every home then reuses the MP3 from S3."""
+    key = _audio_key(inc_id, template)
+    _audio[key] = voice.speak(text)
+    if os.environ.get("BUCKET"):
+        boto3.client("s3").put_object(Bucket=os.environ["BUCKET"], Key=key, Body=_audio[key], ContentType="audio/mpeg")
+
+
 def _say(hh_id: str, inc_id: str, template: str, text: str) -> None:
-    """Text + Polly voice. The MP3 is made once per container and kept in S3, where the phone wall plays it."""
+    """Text + Polly voice (the phone wall plays the same MP3 from S3)."""
     channel.send_text(hh_id, text)
-    key = f"audio/{inc_id}/{template}.mp3"
+    key = _audio_key(inc_id, template)
+    if key not in _audio and os.environ.get("BUCKET"):
+        try:
+            _audio[key] = boto3.client("s3").get_object(Bucket=os.environ["BUCKET"], Key=key)["Body"].read()
+        except Exception:
+            log.warning("no stored audio for %s, synthesising", key)
     if key not in _audio:
-        _audio[key] = voice.speak(text)
-        if os.environ.get("BUCKET"):
-            boto3.client("s3").put_object(Bucket=os.environ["BUCKET"], Key=key, Body=_audio[key], ContentType="audio/mpeg")
+        make_audio(inc_id, template, text)
     channel.send_voice(hh_id, _audio[key], audio_key=key)
 
 
