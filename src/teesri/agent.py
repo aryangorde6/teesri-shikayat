@@ -1,15 +1,29 @@
 """The case agent's three goals (spec §5): prepare_case, notify_water_board, handle_authority_reply.
 
-Mode "template" (now): wording comes from fixed code templates; the same Cedar checks guard every action.
-Mode "agent" (when Bedrock quota arrives): a Strands agent writes the words and picks tools; every tool call
-still goes through policy.check. Numbers always come from code, never from a model.
+AGENT_MODE=agent: a Strands agent per goal (case_agent.py); every tool call goes through Cedar.
+AGENT_MODE=template, or any agent failure: fixed wording from code, same Cedar checks. Numbers always come from code.
 """
+import hashlib
+import logging
 import os
 from datetime import datetime, timedelta, timezone
 
 from teesri import channel, extract, mail, policy, store, texts
 
 MODE = os.environ.get("AGENT_MODE", "template")
+log = logging.getLogger()
+
+
+def _agent(goal: str, inc_id: str, run):
+    """Runs the agent version of a goal; on any failure logs it and returns None (caller uses the template)."""
+    if MODE != "agent":
+        return None
+    try:
+        return run()
+    except Exception as e:
+        log.exception("agent %s failed", goal)
+        store.log_evt(inc_id, actor="case_agent", action=goal, decision="FALLBACK", reason=f"template used: {type(e).__name__}")
+        return None
 AREA = os.environ.get("AREA_NAME", "Dongri, B ward, Mumbai")
 _IST = timezone(timedelta(hours=5, minutes=30))
 
@@ -21,10 +35,14 @@ def _ist(ts: str) -> str:
 # --- goal 1: brief the volunteer ---------------------------------------------------------------------
 
 def prepare_case(inc_id: str, f: dict) -> dict:
+    from teesri import case_agent
+    if (out := _agent("prepare_case", inc_id, lambda: case_agent.prepare_case(inc_id, f))):
+        store.log_evt(inc_id, actor="case_agent", action="prepare_case", decision="DONE", mode="agent", reason="")
+        return out
     summary = template_summary(f)
-    store.log_evt(inc_id, actor="case_agent", action="prepare_case", decision="DONE", mode=MODE,
-                  reason="Hindi brief from the reports (template wording)" if MODE == "template" else "")
-    return {"summary_hi": summary, "mode": MODE}
+    store.log_evt(inc_id, actor="case_agent", action="prepare_case", decision="DONE", mode="template",
+                  reason="Hindi brief from the reports (template wording)")
+    return {"summary_hi": summary, "mode": "template"}
 
 
 def template_summary(f: dict) -> str:
@@ -42,7 +60,24 @@ def template_summary(f: dict) -> str:
 
 # --- goal 2: tell the ward office (no names or numbers) -----------------------------------------------
 
+def case_file(inc_id: str, f: dict) -> dict:
+    """The facts plus how to reach the reporters, as a real case file holds them. Only the agent sees this;
+    Cedar keeps contacts out of anything sent to the authority."""
+    inc = store.get_incident(inc_id)
+    reps = sorted((store.get_report(r) for r in inc["report_ids"]), key=lambda r: r["ts"])
+    def contact(hh_id: str) -> str:
+        if hh_id.startswith("tg"):
+            return f"Telegram chat {hh_id[2:]}"
+        return f"+91 00000 {int(hashlib.sha1(hh_id.encode()).hexdigest(), 16) % 100000:05d}"  # simulated: invalid on purpose
+    return {**f, "reporters": [{"report": f"R{i}", "contact": contact(r["hh_id"])} for i, r in enumerate(reps, 1)]}
+
+
 def notify_water_board(inc_id: str, f: dict) -> str | None:
+    from teesri import case_agent
+    if MODE == "agent":
+        sent = _agent("notify_water_board", inc_id, lambda: case_agent.notify_water_board(inc_id, f, case_file(inc_id, f)))
+        if sent:
+            return sent
     subject, body, fields = compose_email(f)
     to = mail.ward_inbox()
     if not policy.check("workflow", "send_evidence_email", f'Incident::"{inc_id}"', inc_id,
@@ -92,6 +127,9 @@ def compose_email(f: dict) -> tuple[str, str, list[str]]:
 # --- goal 3: the ward office says "resolved" ------------------------------------------------------------
 
 def handle_authority_reply(inc_id: str, f: dict, reply: dict) -> None:
+    from teesri import case_agent
+    if _agent("handle_authority_reply", inc_id, lambda: case_agent.handle_authority_reply(inc_id, f, reply)):
+        return  # the agent tried what it tried (Cedar decided), and asked residents
     res = f'Incident::"{inc_id}"'
     claim = (reply or {}).get("text", "resolved")
     # "Resolved" from the ward office is a request to close the case. Only residents can close it.

@@ -30,10 +30,11 @@ unless { ["ring_warning_v1", "reopened_v1"].contains(context.template_id) };""")
     ("consent-before-message", "this home has not given consent", """
 forbid(principal, action in [Action::"broadcast_warning", Action::"message_household"], resource)
 unless { context.consent == true };"""),
-    ("read-only-before-approval", "while preparing a case the agent may only read", """
+    ("read-only-before-approval", "while preparing a case the agent may only read (and submit its brief)", """
 forbid(principal == Actor::"case_agent", action, resource)
 when { context.phase == "prepare_case" }
-unless { action in [Action::"get_reports", Action::"get_ring_stats", Action::"get_nearby_clinic"] };"""),
+unless { action in [Action::"get_reports", Action::"get_ring_stats", Action::"get_nearby_clinic",
+                     Action::"submit_brief"] };"""),
 ]
 _TEXT = "\n".join(p for _, _, p in POLICIES)
 DEFAULTS = {"quorum_met": False, "fields": [], "recipient_allowlisted": False, "volunteer_approved": False,
