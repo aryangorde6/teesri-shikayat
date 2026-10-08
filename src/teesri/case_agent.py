@@ -119,7 +119,7 @@ def notify_water_board(inc_id: str, f: dict, case_file: dict, llm=None) -> str |
         if not policy.check("case_agent", "send_evidence_email", f'Incident::"{inc_id}"', inc_id,
                             fields=fields, recipient_allowlisted=mail.allowlisted(to)):
             return ("DENIED by policy no-pii-to-authority: names and phone numbers never leave the lane. "
-                    "Remove all contact details and send again.")
+                    "Remove all contact details, then call send_evidence_email again with the corrected subject and body.")
         sent["via"] = mail.send(inc_id, to, subject, body)
         return "Sent."
 

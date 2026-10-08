@@ -118,3 +118,32 @@ def test_a_tool_call_written_as_text_is_asked_again_with_the_grammar(model_up):
     result = Agent(model=selfhost.strands_model(), callback_handler=None, tools=[get_case_facts])("facts?")
     assert seen == ["facts"] and str(result).strip() == "3 घर"
     assert [r["body"].get("tool_choice") for r in w.requests] == [None, "required", None]
+
+
+def test_after_a_deny_a_text_answer_is_asked_again_as_a_tool_call(model_up):
+    sent = []
+
+    @tool
+    def send_evidence_email(subject: str, body: str) -> str:
+        """Send the complaint email to the ward office."""
+        sent.append(body)
+        return ("DENIED by policy no-pii-to-authority: names and phone numbers never leave the lane."
+                if "+91" in body else "Sent.")
+
+    def call_with(body):
+        return completion(tool_calls=[{"id": f"c{len(sent)}", "type": "function", "function": {
+            "name": "send_evidence_email", "arguments": json.dumps({"subject": "s", "body": body})}}], finish="tool_calls")
+
+    def reply(req):
+        last = req["body"]["messages"][-1]
+        if last["role"] == "user":
+            return call_with("call +91 00000 12345")         # first draft leaks a phone number
+        if "DENIED" in json.dumps(last, ensure_ascii=False):
+            if req["body"].get("tool_choice") == "required":
+                return call_with("3 homes, 212 m")           # forced to act: the redraft goes through the tool
+            return completion("Here is the corrected email: 3 homes, 212 m")  # what Gemma does unforced
+        return completion("Done.")
+    w = model_up(reply)
+    Agent(model=selfhost.strands_model(), callback_handler=None, tools=[send_evidence_email])("send it")
+    assert sent == ["call +91 00000 12345", "3 homes, 212 m"]
+    assert [r["body"].get("tool_choice") for r in w.requests] == [None, None, "required", None]
