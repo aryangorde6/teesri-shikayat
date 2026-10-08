@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 from teesri import channel, extract, mail, policy, store, texts
 
 MODE = os.environ.get("AGENT_MODE", "template")
+GOAL_BUDGET_S = 200  # the case Lambda times out at 300 s
 log = logging.getLogger()
 
 
@@ -18,6 +19,8 @@ def _agent(goal: str, inc_id: str, run):
     """Runs the agent version of a goal; on any failure logs it and returns None (caller uses the template)."""
     if MODE != "agent":
         return None
+    from teesri import selfhost
+    selfhost.start_budget(GOAL_BUDGET_S)  # leaves the case Lambda time to fall back to the template
     try:
         return run()
     except Exception as e:

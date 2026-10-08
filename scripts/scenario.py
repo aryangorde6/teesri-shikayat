@@ -12,11 +12,13 @@ Usage: AWS_PROFILE=hackathon .venv/bin/python scripts/scenario.py <command>
   ward-reply [text]       the ward office replies (default "Resolved")
   answer <home> yes|no    a simulated home answers the check-in, e.g. answer C yes
   quiet on|off            rehearsal mode: hold back messages to real phones (turn OFF before recording)
+  model on|off|status     the self-hosted model instance ($0.43/h while on; it stops itself after an idle hour)
 """
 import json
 import os
 import pathlib
 import sys
+import time
 
 import boto3
 
@@ -27,7 +29,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "src"))
 def main() -> None:
     args = sys.argv[1:]
     if not args or args[0] not in {"reset", "seed", "building", "stand-in", "status", "volunteer", "approve",
-                                   "ward-reply", "answer", "quiet"}:
+                                   "ward-reply", "answer", "quiet", "model"}:
         sys.exit(__doc__)
     outputs = boto3.client("cloudformation", region_name=REGION).describe_stacks(StackName="Teesri")["Stacks"][0]["Outputs"]
     out = {o["OutputKey"]: o["OutputValue"] for o in outputs}
@@ -38,6 +40,8 @@ def main() -> None:
     from teesri import scenario
 
     cmd = args[0]
+    if cmd == "model":
+        return print(json.dumps(model(out["ModelInstanceId"], args[1] if len(args) > 1 else "status"), indent=2))
     result = {
         "reset": lambda: scenario.reset(mine="--mine" in args),
         "seed": scenario.seed,
@@ -51,6 +55,24 @@ def main() -> None:
         "quiet": lambda: scenario.set_quiet(args[1] == "on"),
     }[cmd]()
     print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
+
+
+def model(instance_id: str, action: str) -> dict:
+    """Start or stop the model instance; "on" waits until the model answers its heartbeat."""
+    from teesri import store
+    ec2 = boto3.client("ec2", region_name=REGION)
+    if action == "on":
+        ec2.start_instances(InstanceIds=[instance_id])
+    elif action == "off":
+        ec2.stop_instances(InstanceIds=[instance_id])
+    started = time.time()
+    while True:
+        state = ec2.describe_instances(InstanceIds=[instance_id])["Reservations"][0]["Instances"][0]["State"]["Name"]
+        hb = store.table().get_item(Key={"PK": "MODEL#heartbeat", "SK": "META"}).get("Item") or {}
+        up = state == "running" and time.time() - int(hb.get("ts", 0)) < 60
+        if action != "on" or up or time.time() - started > 300:
+            return {"instance": state, "model": hb.get("model") if up else None, "answering": up}
+        time.sleep(10)
 
 
 if __name__ == "__main__":

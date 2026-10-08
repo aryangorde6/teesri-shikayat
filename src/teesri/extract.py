@@ -30,13 +30,13 @@ TOOL = {"toolSpec": {
         "type": "object",
         "properties": {
             "colour": {"type": "string", "enum": sorted(COLOURS) + ["not_said"],
-                       "description": "Water colour: clear, yellow (peela), brown (bhura/matmaila), black (kaala)."},
-            "smell": {"type": "string", "enum": ["yes", "no", "not_said"], "description": "Does the water smell bad (badboo)?"},
-            "since_days": {"type": "integer", "description": "How many days the problem has lasted. Today = 0. Not said = -1."},
+                       "description": "Water colour: clear (साफ़), yellow (पीला, peela), brown (भूरा, मटमैला, मिट्टी जैसा, bhura), black (काला, kaala)."},
+            "smell": {"type": "string", "enum": ["yes", "no", "not_said"], "description": "Does the water smell bad (बदबू, महक, गंध, badboo)?"},
+            "since_days": {"type": "integer", "description": "How many days the problem has lasted: आज (today) = 0, कल (yesterday) = 1, दो दिन = 2. Not said = -1."},
             "illness": {"type": "array", "items": {"type": "string", "enum": sorted(ILLNESS)},
-                        "description": "Symptoms anyone in the home has."},
+                        "description": "Symptoms anyone in the home has: diarrhoea (दस्त), vomiting (उल्टी), fever (बुखार), stomach_pain (पेट दर्द), jaundice (पीलिया), skin_rash (खुजली)."},
             "vulnerable": {"type": "array", "items": {"type": "string", "enum": sorted(VULNERABLE)},
-                           "description": "Who is affected, if said: child, elderly, pregnant."},
+                           "description": "Who is affected, if said: child (बच्चा, बच्चे), elderly (बुज़ुर्ग, दादा, दादी), pregnant (गर्भवती)."},
         },
         "required": ["colour", "smell", "since_days", "illness", "vulnerable"],
     }},
@@ -45,10 +45,24 @@ TOOL = {"toolSpec": {
 _client = None
 
 
+def source() -> str:
+    """What reads voice notes first: Nova on Bedrock, or the open model on our own instance."""
+    return "selfhost" if os.environ.get("MODEL_BACKEND") == "selfhost" else "nova"
+
+
 def extract(transcript: str) -> dict | None:
     global _client
     if not transcript.strip():
         return None
+    if source() == "selfhost":
+        from teesri import selfhost
+        try:  # instance off -> None at once; the keyword reader takes over
+            raw = selfhost.chat_json(SYSTEM, transcript, TOOL["toolSpec"]["inputSchema"]["json"]) if selfhost.available() else None
+        except Exception as e:
+            log.warning("self-hosted extraction unavailable: %s", e)
+            return None
+        f = validate(raw) if isinstance(raw, dict) else None
+        return ground(f, transcript) if f else None
     try:
         _client = _client or boto3.client("bedrock-runtime", region_name=os.environ.get("BEDROCK_REGION", "ap-south-1"))
         resp = _client.converse(
@@ -63,7 +77,8 @@ def extract(transcript: str) -> dict | None:
         return None
     for block in resp["output"]["message"]["content"]:
         if "toolUse" in block:
-            return validate(block["toolUse"]["input"])
+            f = validate(block["toolUse"]["input"])
+            return ground(f, transcript) if f else None
     return None
 
 
@@ -93,8 +108,8 @@ COLOUR_WORDS = {
               "bhura", "bhoora", "bhure", "bhoore", "matmaila", "matmela", "mitti", "brown", "muddy"},
     "black": {"काला", "काले", "काली", "kala", "kaala", "kale", "kaale", "kali", "kaali", "black"},
 }
-SMELL_WORDS = {"बदबू", "बदबु", "बदबूदार", "बास", "दुर्गंध", "गंध",
-               "badbu", "badboo", "badbudar", "badbudaar", "durgandh", "smell", "smells", "smelly", "stink", "stinks", "stinking"}
+SMELL_WORDS = {"बदबू", "बदबु", "बदबूदार", "बास", "दुर्गंध", "गंध", "महक",
+               "mahak", "badbu", "badboo", "badbudar", "badbudaar", "durgandh", "smell", "smells", "smelly", "stink", "stinks", "stinking"}
 ILLNESS_WORDS = {
     "diarrhoea": {"दस्त", "डायरिया", "लूज", "dast", "loose", "diarrhoea", "diarrhea"},
     "vomiting": {"उल्टी", "उलटी", "उल्टियां", "ulti", "ultee", "vomit", "vomiting"},
@@ -154,6 +169,21 @@ def _since(tokens: list[str]) -> int:
     return next((SINCE_WORDS[t] for t in tokens if t in SINCE_WORDS), -1)
 
 
+def _stomach(clauses: list[list[str]]) -> bool:
+    return any(({"पेट", "pet", "stomach"} & set(c)) and ({"दर्द", "खराब", "dard", "kharab", "pain", "ache", "upset"} & set(c))
+               and not NEGATION & set(c) for c in clauses)
+
+
+def ground(f: dict, text: str) -> dict:
+    """Health claims must be in the resident's own words: an illness or a vulnerable person the text never
+    mentions is dropped, whatever the model said. (Colour, smell and days stay the model's reading.)"""
+    clauses = _clauses(text)
+    tokens = {t for c in clauses for t in c}
+    f["illness"] = [i for i in f["illness"] if (_stomach(clauses) if i == "stomach_pain" else _said(clauses, ILLNESS_WORDS[i]))]
+    f["vulnerable"] = [v for v in f["vulnerable"] if f["illness"] and VULNERABLE_WORDS[v] & tokens]
+    return f
+
+
 def keywords(transcript: str) -> dict | None:
     """Plain-code reading of a Hindi transcript (or typed message) into the same fields as the model, then the same validate().
     Only words that are actually said count; "पानी गंदा है" alone names no colour or smell, so it returns None."""
@@ -161,12 +191,26 @@ def keywords(transcript: str) -> dict | None:
     tokens = [t for c in clauses for t in c]
     colour = next((name for name, words in COLOUR_WORDS.items() if _said(clauses, words)), "not_said")
     illness = [name for name, words in ILLNESS_WORDS.items() if _said(clauses, words)]
-    if any(({"पेट", "pet", "stomach"} & set(c)) and ({"दर्द", "dard", "pain", "ache"} & set(c)) and not NEGATION & set(c)
-           for c in clauses):
+    if _stomach(clauses):
         illness.append("stomach_pain")
     vulnerable = [name for name, words in VULNERABLE_WORDS.items() if illness and words & set(tokens)]
     return validate({"colour": colour, "smell": {True: "yes", False: "no", None: "not_said"}[_said(clauses, SMELL_WORDS)],
                      "since_days": _since(tokens), "illness": illness, "vulnerable": vulnerable})
+
+
+def read(text: str) -> tuple[dict | None, str]:
+    """The model first; the keyword reader fills only what the model left empty (literal words, never a guess).
+    Without a model answer, the keyword reader alone. (fields or None, source)"""
+    model, kw = extract(text), keywords(text)
+    if not model:
+        return kw, "keywords"
+    if kw:
+        for k in ("colour", "smell", "since_days"):
+            if model[k] is None:
+                model[k] = kw[k]
+        for k in ("illness", "vulnerable"):
+            model[k] = sorted(set(model[k]) | set(kw[k]))
+    return model, source()
 
 
 def sounds_like_complaint(text: str) -> bool:

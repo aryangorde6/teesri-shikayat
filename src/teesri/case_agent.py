@@ -17,7 +17,13 @@ MAX_TOOL_CALLS = 6
 _PHONE = re.compile(r"(?:\+?91[\s-]?)?\d{5}[\s-]?\d{5}")
 
 
-def model():
+def model(require_up: bool = True):
+    """Nova on Bedrock, or the open model on our own instance (MODEL_BACKEND=selfhost; Bedrock quota is 0)."""
+    from teesri import selfhost
+    if selfhost.enabled():
+        if require_up and not selfhost.available():
+            raise RuntimeError("model instance is off")
+        return selfhost.strands_model()
     return BedrockModel(model_id=os.environ.get("MODEL_ID", "global.amazon.nova-2-lite-v1:0"),
                         region_name=os.environ.get("BEDROCK_REGION", "ap-south-1"), temperature=0, max_tokens=800)
 
@@ -121,7 +127,8 @@ def notify_water_board(inc_id: str, f: dict, case_file: dict, llm=None) -> str |
                   system_prompt=("You write a short, formal English complaint email from residents to the Ward Officer, "
                                  "B Ward, Mumbai, about possible tap-water contamination, asking for an inspection and "
                                  "water testing. Use get_case_facts, then send_evidence_email. Include what helps the "
-                                 "office act. Sign as 'Teesri Shikayat (resident alert system; not affiliated with BMC)'."))
+                                 "office act: the case id, the area, how many homes reported, how far apart and over "
+                                 "how many hours, and what residents reported. Sign as 'Teesri Shikayat (resident alert system; not affiliated with BMC)'."))
     _run(agent, "Write and send the complaint for this case.")
     return sent.get("via")
 

@@ -65,6 +65,15 @@ def test_keywords_read_typed_hinglish_and_english():
     assert extract.keywords("hello") is None
 
 
+def test_health_claims_must_be_in_the_words():
+    model = {"colour": "yellow", "smell": True, "since_days": 2, "illness": ["diarrhoea", "vomiting"], "vulnerable": ["child", "elderly"]}
+    f = extract.ground(dict(model), "पानी पीला है, बदबू आ रही है, 2 दिन से ।")  # a model that invents illness
+    assert (f["colour"], f["illness"], f["vulnerable"]) == ("yellow", [], [])
+    f = extract.ground(dict(model), "पानी पीला है, बच्चे को उल्टी हो रही है")
+    assert (f["illness"], f["vulnerable"]) == (["vomiting"], ["child"])
+    assert extract.ground({**model, "illness": ["stomach_pain"]}, "पीने के बाद पेट खराब है")["illness"] == ["stomach_pain"]
+
+
 def test_sounds_like_complaint():
     assert extract.sounds_like_complaint("पानी गंदा है")
     assert extract.sounds_like_complaint("paani bahut ganda aa raha hai")

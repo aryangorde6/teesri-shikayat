@@ -245,7 +245,7 @@ def selftest(e):
     import importlib.metadata as md
 
     from teesri import case_agent
-    case_agent.model()
+    case_agent.model(require_up=False)
     return {"strands": md.version("strands-agents"), "cedarpy": md.version("cedarpy"),
             "agent_mode": agent.MODE, "policies": len(policy.POLICIES)}
 

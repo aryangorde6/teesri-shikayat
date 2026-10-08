@@ -5,6 +5,7 @@ Usage: AWS_PROFILE=hackathon .venv/bin/python scripts/preflight.py
 import json
 import os
 import sys
+import time
 import urllib.request
 
 import boto3
@@ -59,6 +60,24 @@ def main() -> None:
     res = fn.invoke(FunctionName=case["FunctionName"], Payload=json.dumps({"step": "selftest"}).encode())
     body = json.loads(res["Payload"].read() or b"{}")
     check("Case Lambda: Strands + Cedar load", "FunctionError" not in res, f"strands {body.get('strands')}, cedarpy {body.get('cedarpy')}")
+    backend = case.get("Environment", {}).get("Variables", {}).get("MODEL_BACKEND", "bedrock")
+    if backend == "selfhost":  # the open model on our instance: does it answer through the queue right now?
+        os.environ.update(TABLE=out["TableName"], MODEL_BACKEND="selfhost", AWS_DEFAULT_REGION=REGION,
+                          MODEL_QUEUE_URL=case["Environment"]["Variables"]["MODEL_QUEUE_URL"])
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+        from teesri import selfhost
+        try:
+            t0 = time.time()
+            status, _, text = selfhost.call("/v1/chat/completions", {"messages": [{"role": "user", "content": "Reply OK."}],
+                                                                     "max_tokens": 5}, timeout=30) if selfhost.available() else (0, "", "")
+            nova, err = status == 200, ("instance off: run scenario.py model on" if not status else f"HTTP {status}")
+            took = f"{time.time() - t0:.1f}s"
+        except Exception as e:
+            nova, err, took = False, type(e).__name__, ""
+        check("Self-hosted model answers (instance on, via the queue)", nova or mode != "agent",
+              f"answered in {took}" if nova else f"{err}; agent steps would fall back to templates")
+        print("\nREADY" if ok else "\nNOT READY: fix the ❌ lines above")
+        sys.exit(0 if ok else 1)
     rt = boto3.client("bedrock-runtime", region_name=REGION, config=Config(retries={"max_attempts": 1}))
     try:
         rt.converse(modelId=os.environ.get("MODEL_ID", "global.amazon.nova-2-lite-v1:0"),

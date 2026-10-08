@@ -86,7 +86,7 @@ def on_typed(hh: dict, msg: dict) -> None:
     """A typed complaint counts like a voice note: the keyword reader, then the buttons; anything else gets the hint."""
     hh_id, text = hh["PK"].removeprefix("HH#"), msg["text"][:500]
     rpt_id = f"{hh_id}-{msg['message_id']}"
-    fields = extract.keywords(text)
+    fields, _ = extract.read(text)
     if fields:
         return finalize(rpt_id, hh, fields, "text", text)
     if extract.sounds_like_complaint(text):
@@ -188,9 +188,7 @@ def on_transcribed(detail: dict) -> None:
     if detail.get("TranscriptionJobStatus") == "COMPLETED":
         transcript, key = voice.read_transcript(name)
     log.info("transcript %s: %s", rpt_id, transcript)
-    fields, source = extract.extract(transcript), "nova"
-    if not fields:  # model unavailable or found nothing: the plain-code keyword reader, same fields, same checks
-        fields, source = extract.keywords(transcript), "keywords"
+    fields, source = extract.read(transcript)  # the model, then the keyword reader for anything it left out
     if fields:
         return finalize(rpt_id, hh, fields, source, transcript, key)
     store.put_draft(rpt_id, hh_id=hh_id, transcript=transcript, transcript_key=key)
