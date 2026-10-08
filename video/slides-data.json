@@ -16,5 +16,5 @@
   "nearest_hospital": {"value": "J. J. Hospital, ~370 m from the ring centre", "source": "OpenStreetMap way/803325198 (src/teesri/data/clinics_dongri.json)"},
   "cost_per_incident": {"value": "about Rs 1 ($0.011)", "source": "scripts/cost_per_incident.py on the live run Thu 8 Oct 15:37 ($0.064 before making each Polly message once; same counts with the fix: ~$0.011). Re-run after the recording run for the final figure.",
     "fx": "Rs 88/USD assumed"},
-  "tests": {"value": "45 tests", "source": ".venv/bin/python -m pytest -q"}
+  "tests": {"value": "47 tests", "source": ".venv/bin/python -m pytest -q"}
 }
