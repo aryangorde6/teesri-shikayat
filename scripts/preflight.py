@@ -20,6 +20,11 @@ def check(name: str, passed: bool, detail: str = "") -> None:
     print(f"{'✅' if passed else '❌'} {name}{' — ' + detail if detail else ''}")
 
 
+def warn(name: str, detail: str) -> None:
+    """Not a blocker, but it decides how to record."""
+    print(f"⚠️  {name} — {detail}")
+
+
 def main() -> None:
     out = {o["OutputKey"]: o["OutputValue"] for o in boto3.client("cloudformation", region_name=REGION)
            .describe_stacks(StackName="Teesri")["Stacks"][0]["Outputs"]}
@@ -61,7 +66,11 @@ def main() -> None:
         nova = True
     except Exception as e:
         nova, err = False, type(e).__name__
-    check("Nova answers (voice notes read by the model)", nova, "" if nova else f"{err}: voice notes fall back to buttons")
+    if nova or mode == "agent":  # agent mode without Nova would quietly fall back to templates: a blocker
+        check("Nova answers (voice notes read by the model)", nova, "" if nova else f"{err}, but AGENT_MODE=agent")
+    else:
+        warn("Nova unavailable", f"{err}. Template mode: voice notes are read by the keyword reader (say a colour or बदबू). "
+             "Record with voiceover-template.md, build_cards.py --mode template, build_video.py --mode template")
     check("Case agent mode", mode == "agent" or not nova,
           f"AGENT_MODE={mode}" + (" — Nova works now: switch to agent in infra/stack.py and deploy" if nova and mode != "agent" else ""))
     print("\nREADY" if ok else "\nNOT READY: fix the ❌ lines above")

@@ -4,7 +4,7 @@ One live run films the PHONE shots and the WEB shots together: `console_tour.py 
 
 ## Before
 
-- [ ] `AWS_PROFILE=hackathon .venv/bin/python scripts/preflight.py` says READY (webhook, Pipe, no leftover case, quiet off, phone enrolled with no old reports, Nova, agent mode)
+- [ ] `AWS_PROFILE=hackathon .venv/bin/python scripts/preflight.py` says READY (webhook, Pipe, no leftover case, quiet off, phone enrolled with no old reports, agent mode). Without Nova it prints a ⚠️ line, not a ❌: record in template mode.
 - [ ] Bedrock: if the quota has arrived, `AGENT_MODE` is `agent` in `infra/stack.py` and deployed (shots 6, 10, 11 need it). If not, decide: template mode, or wait.
 - [ ] `AWS_PROFILE=hackathon .venv/bin/python scripts/scenario.py quiet off` (the console must NOT show the red "real phones muted" chip)
 - [ ] `AWS_PROFILE=hackathon .venv/bin/python scripts/scenario.py reset` — add `--mine` to also clear your phone's old test reports (otherwise your phone shows as "reported" before you've sent anything)
