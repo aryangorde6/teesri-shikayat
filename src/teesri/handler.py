@@ -115,8 +115,9 @@ def on_consent(hh_id: str, yes: bool) -> None:
 
 # --- Fallback questions (when the model can't read the voice note) -------------
 
-def ask_colour(hh_id: str, rpt_id: str) -> None:
-    channel.send_text(hh_id, texts.FALLBACK_COLOUR, buttons=[[(t, f"fb|{rpt_id}|c|{v}") for t, v in texts.COLOUR_BUTTONS]])
+def ask_colour(hh_id: str, rpt_id: str, heard: bool = False) -> None:
+    text = texts.ASK_COLOUR if heard else texts.FALLBACK_COLOUR
+    channel.send_text(hh_id, text, buttons=[[(t, f"fb|{rpt_id}|c|{v}") for t, v in texts.COLOUR_BUTTONS]])
 
 
 def on_fallback_answer(hh_id: str, rpt_id: str, field: str, value: str) -> None:
@@ -153,7 +154,7 @@ def on_transcribed(detail: dict) -> None:
     if fields:
         return finalize(rpt_id, hh, fields, "nova", transcript, key)
     store.put_draft(rpt_id, hh_id=hh_id, transcript=transcript, transcript_key=key)
-    ask_colour(hh_id, rpt_id)
+    ask_colour(hh_id, rpt_id, heard=bool(transcript.strip()))
 
 
 def finalize(rpt_id: str, hh: dict, fields: dict, source: str, transcript: str = "", key: str = "") -> None:

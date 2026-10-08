@@ -1,4 +1,7 @@
-"""The whole backend: one table, one bucket, one Lambda behind one Function URL."""
+"""The whole backend: one table, one bucket, the API Lambda behind a Function URL, and the tripwire
+Lambda fed by DynamoDB Streams through an EventBridge Pipe."""
+import json
+
 from aws_cdk import (
     CfnOutput,
     Duration,
@@ -8,6 +11,7 @@ from aws_cdk import (
     aws_events_targets as targets,
     aws_iam as iam,
     aws_lambda as lambda_,
+    aws_pipes as pipes,
     aws_s3 as s3,
 )
 from constructs import Construct
@@ -42,31 +46,38 @@ class TeesriStack(Stack):
             enforce_ssl=True,
         )
 
-        fn = lambda_.Function(
-            self, "Api",
-            runtime=lambda_.Runtime.PYTHON_3_13,
-            architecture=lambda_.Architecture.ARM_64,
-            handler="teesri.handler.main",
-            code=lambda_.Code.from_asset("build"),
-            memory_size=256,
-            timeout=Duration.seconds(30),
-            reserved_concurrent_executions=20,  # cost guard for a public URL
-            environment={
-                "TABLE": table.table_name,
-                "BUCKET": bucket.bucket_name,
-                "TG_TOKEN_PARAM": TOKEN_PARAM,
-                "TG_SECRET_PARAM": SECRET_PARAM,
-                "BEDROCK_REGION": "ap-south-1",
-                "MODEL_ID": "global.amazon.nova-2-lite-v1:0",
-            },
-        )
-        table.grant_read_write_data(fn)
-        bucket.grant_read_write(fn)
-        fn.add_to_role_policy(iam.PolicyStatement(
+        code = lambda_.Code.from_asset("build")
+        env = {
+            "TABLE": table.table_name,
+            "BUCKET": bucket.bucket_name,
+            "TG_TOKEN_PARAM": TOKEN_PARAM,
+            "TG_SECRET_PARAM": SECRET_PARAM,
+            "BEDROCK_REGION": "ap-south-1",
+            "MODEL_ID": "global.amazon.nova-2-lite-v1:0",
+        }
+        ssm_read = iam.PolicyStatement(
             actions=["ssm:GetParameter"],
             resources=[self.format_arn(service="ssm", resource="parameter", resource_name="teesri/*")],
-        ))
+        )
 
+        def backend_fn(cid: str, handler: str, concurrency: int) -> lambda_.Function:
+            f = lambda_.Function(
+                self, cid,
+                runtime=lambda_.Runtime.PYTHON_3_13,
+                architecture=lambda_.Architecture.ARM_64,
+                handler=handler,
+                code=code,
+                memory_size=256,
+                timeout=Duration.seconds(30),
+                reserved_concurrent_executions=concurrency,  # cost guard
+                environment=env,
+            )
+            table.grant_read_write_data(f)
+            f.add_to_role_policy(ssm_read)
+            return f
+
+        fn = backend_fn("Api", "teesri.handler.main", 20)
+        bucket.grant_read_write(fn)
         fn.add_to_role_policy(iam.PolicyStatement(
             actions=["transcribe:StartTranscriptionJob", "transcribe:GetTranscriptionJob", "polly:SynthesizeSpeech"],
             resources=["*"],
@@ -75,6 +86,36 @@ class TeesriStack(Stack):
             actions=["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
             resources=["arn:aws:bedrock:*:*:inference-profile/*", "arn:aws:bedrock:*::foundation-model/*"],
         ))
+
+        # The tripwire: every new report (RPT# insert) -> Pipe -> deterministic rule. Nothing else reaches it.
+        tripwire = backend_fn("Tripwire", "teesri.tripwire.main", 5)
+        tripwire.add_to_role_policy(iam.PolicyStatement(actions=["polly:SynthesizeSpeech"], resources=["*"]))
+        pipe_role = iam.Role(self, "PipeRole", assumed_by=iam.ServicePrincipal("pipes.amazonaws.com"))
+        table.grant_stream_read(pipe_role)
+        tripwire.grant_invoke(pipe_role)
+        pipe = pipes.CfnPipe(
+            self, "ReportsToTripwire",
+            role_arn=pipe_role.role_arn,
+            source=table.table_stream_arn,
+            source_parameters=pipes.CfnPipe.PipeSourceParametersProperty(
+                dynamo_db_stream_parameters=pipes.CfnPipe.PipeSourceDynamoDBStreamParametersProperty(
+                    starting_position="LATEST",
+                    batch_size=10,
+                    maximum_retry_attempts=3,
+                    on_partial_batch_item_failure="AUTOMATIC_BISECT",
+                ),
+                filter_criteria=pipes.CfnPipe.FilterCriteriaProperty(filters=[pipes.CfnPipe.FilterProperty(
+                    pattern=json.dumps({"eventName": ["INSERT"],
+                                        "dynamodb": {"Keys": {"PK": {"S": [{"prefix": "RPT#"}]}}}}),
+                )]),
+            ),
+            target=tripwire.function_arn,
+            target_parameters=pipes.CfnPipe.PipeTargetParametersProperty(
+                lambda_function_parameters=pipes.CfnPipe.PipeTargetLambdaFunctionParametersProperty(
+                    invocation_type="REQUEST_RESPONSE"),
+            ),
+        )
+        pipe.node.add_dependency(pipe_role)  # the role's policy must exist before the Pipe validates it
 
         # Transcribe finished (or failed) -> same Lambda continues the voice note.
         events.Rule(
@@ -93,3 +134,4 @@ class TeesriStack(Stack):
         CfnOutput(self, "FunctionUrl", value=url.url)
         CfnOutput(self, "TableName", value=table.table_name)
         CfnOutput(self, "BucketName", value=bucket.bucket_name)
+        CfnOutput(self, "TripwireName", value=tripwire.function_name)

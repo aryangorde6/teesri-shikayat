@@ -109,3 +109,11 @@ def test_voice_before_joining_gets_welcome(env, monkeypatch):
     monkeypatch.setattr(telegram, "download_file", lambda fid: pytest.fail("must not download"))
     post(msg(voice={"file_id": "f", "duration": 3}))
     assert env[-1][2] == texts.WELCOME
+
+
+def test_heard_but_no_details_asks_without_apologising(env, monkeypatch):
+    join()
+    monkeypatch.setattr(voice, "read_transcript", lambda name: ("पानी गंदा है ।", "k"))
+    monkeypatch.setattr(extract, "extract", lambda t: None)  # model unavailable or nothing classifiable
+    handler.main({"source": "aws.transcribe", "detail": {"TranscriptionJobName": f"vn_{ME}_79", "TranscriptionJobStatus": "COMPLETED"}}, None)
+    assert env[-1][2] == texts.ASK_COLOUR
