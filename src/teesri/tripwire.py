@@ -9,7 +9,7 @@ import hashlib
 import logging
 from datetime import datetime, timedelta, timezone
 
-from teesri import channel, extract, geo, store, texts, voice
+from teesri import channel, extract, geo, population, store, texts, voice
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -72,7 +72,7 @@ def apply(rpt: dict, decision: str, d: dict) -> None:
     elif decision == "incident":
         inc = new_incident(rpt, d)
         store.create_incident(inc, sorted(inc["report_ids"]))
-        store.log_event("tripwire", decision="incident", inc_id=inc["inc_id"], **inc["fired"])
+        store.log_event("tripwire", decision="incident", inc_id=inc["inc_id"], ring_pop=inc["ring_pop"], **inc["fired"])
     elif decision == "tank":
         advise_tank(d["members"])
         store.log_event("tripwire", decision="one_building", rpt_id=_rid(rpt), homes=d["homes"], spread_m=d["spread_m"])
@@ -111,9 +111,11 @@ def new_incident(trigger: dict, d: dict) -> dict:
     anchor = min(d["members"], key=lambda r: (r["ts"], r["PK"]))
     inc_id = f"inc-{anchor['ts'][:10].replace('-', '')}-{hashlib.sha1(anchor['PK'].encode()).hexdigest()[:6]}"
     now = store.now_iso()
+    people = population.ring_population(d["lat"], d["lon"], RING_M)
     return {
         "inc_id": inc_id, "status": "OPEN", "created_ts": now, "updated_ts": now,
         "lat": d["lat"], "lon": d["lon"], "ring_m": RING_M,
+        "ring_pop": "NO DATA" if people is None else people,  # GHS-POP residents in the ring, never a fake 0
         "homes": {r["hh_id"] for r in d["members"]},
         "report_ids": {_rid(r) for r in d["members"]},
         "trigger_rpt": _rid(trigger),

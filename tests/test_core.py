@@ -1,4 +1,6 @@
-from teesri import extract, geo, texts
+import math
+
+from teesri import extract, geo, population, texts
 
 
 def test_geohash_known_value():
@@ -42,3 +44,30 @@ def test_receipt_text():
     assert texts.receipt({"colour": "yellow", "smell": True, "since_days": 3}) == \
         "आपकी शिकायत मिल गई: पीला, बदबूदार पानी, 3 दिन से। हम आस-पास की शिकायतें देख रहे हैं।"
     assert texts.receipt({"colour": None, "smell": True, "since_days": None}).startswith("आपकी शिकायत मिल गई: बदबूदार पानी।")
+
+
+def _uniform_grid(lat, lon, people_per_cell=100.0, half_cells=15):
+    m = 6_371_000 * math.pi / 180
+    cells = [[lat + r * 100 / m, lon + c * 100 / (m * math.cos(math.radians(lat))), people_per_cell]
+             for r in range(-half_cells, half_cells + 1) for c in range(-half_cells, half_cells + 1)]
+    lats, lons = [x[0] for x in cells], [x[1] for x in cells]
+    return {"cell_m": 100, "covered": [min(lats), min(lons), max(lats), max(lons)], "cells": cells}
+
+
+def test_ring_population_counts_the_part_of_each_cell_inside_the_ring():
+    grid = _uniform_grid(18.9622, 72.8368)
+    expected = math.pi * 250**2 / 100**2 * 100  # ~1,963 people
+    assert abs(population.ring_population(18.9622, 72.8368, 250, grid) - expected) / expected < 0.03
+
+
+def test_missing_population_data_is_no_data_never_zero():
+    grid = _uniform_grid(18.9622, 72.8368)
+    assert population.ring_population(19.10, 72.85, 250, grid) is None   # ring outside the grid
+    assert population.ring_population(18.9622, 72.8368, 250, {}) is None  # no grid at all
+    assert population.label(None) == "NO DATA" and population.label(0) == "~0"
+    assert population.label(12_345) == "~12,300"
+
+
+def test_real_dongri_grid_gives_a_ring_count():
+    people = population.ring_population(18.9622, 72.8368, 250)
+    assert people is not None and people > 1000

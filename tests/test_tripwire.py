@@ -5,7 +5,7 @@ import boto3
 import pytest
 from moto import mock_aws
 
-from teesri import channel, store, texts, tripwire, voice
+from teesri import channel, population, store, texts, tripwire, voice
 
 LAT, LON = 18.9622, 72.8368  # Dongri, B ward, Mumbai (OpenStreetMap)
 M_PER_DEG = 6_371_000 * math.pi / 180
@@ -63,6 +63,7 @@ def test_three_homes_212m_71h_fire_one_incident(env):
     [inc] = incidents()
     assert inc["fired"] == {"homes": 3, "spread_m": 212, "span_h": 71}
     assert inc["homes"] == {"sim-A", "sim-B", "sim-C"} and inc["status"] == "OPEN"
+    assert inc["ring_pop"] > 1000  # GHS-POP residents inside the 250 m ring in Dongri
     assert all(store.get_report(r["PK"][4:])["inc_id"] == inc["inc_id"] for r in (a, b, c))
 
 
@@ -123,3 +124,12 @@ def test_two_simultaneous_third_reports_make_exactly_one_incident(env, monkeypat
     assert tripwire.evaluate(d) == "join"       # ...so its write is refused, and on the second look it joins
     [inc] = incidents()
     assert inc["homes"] == {"sim-A", "sim-B", "sim-C", "sim-D"}
+
+
+def test_incident_without_population_data_says_no_data(env, monkeypatch):
+    monkeypatch.setattr(population, "_grid", lambda: None)
+    report("A", 0, 0)
+    report("B", 0, 150)
+    tripwire.evaluate(report("C", 120, 60, h=2))
+    [inc] = incidents()
+    assert inc["ring_pop"] == "NO DATA"
