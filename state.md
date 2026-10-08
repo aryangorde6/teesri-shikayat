@@ -1,6 +1,6 @@
 # State: what's built so far
 
-Last updated: Thu 08 Oct 2026, 18:12 IST · Event: WeMakeDevs × AWS Environmental Hacks (Heat and Water), Oct 8–11
+Last updated: Thu 08 Oct 2026, 18:42 IST · Event: WeMakeDevs × AWS Environmental Hacks (Heat and Water), Oct 8–11
 
 **Teesri Shikayat** ("the third complaint"): residents send Hindi voice notes about dirty tap water on Telegram. When 3 homes within 250 m report it inside 72 h, everyone enrolled nearby is warned, and only residents can close the case.
 
@@ -23,6 +23,7 @@ Last updated: Thu 08 Oct 2026, 18:12 IST · Event: WeMakeDevs × AWS Environment
 | Thu 17:47 | Real-phone rehearsal: **blocked**. Telegram Desktop can't be driven (Wayland, no automation); Telegram Web in Chrome needs a QR scan from the phone (Settings → Devices → Link Desktop Device). Kickoff page re-checked 17:50: deadline hour still TBA. | — | — |
 | Thu 17:58–18:05 | **Video assembler:** `scripts/build_video.py` renders `video/edl.json` (14 shots: cards, console tour with in-points from `beats.json`, phone/AWS PiP boxes, labels, timed captions, diegetic audio, narration + burned subtitles; `--mode template`). Missing footage becomes labelled placeholders, so the whole cut can be previewed now. Assembly steps added to `video/recording-checklist.md`. | `76314b6` … | ✅ both animatics render at 2:47.9; frames checked; 720p preview sent to Aryan |
 | Thu 18:06 | Writeup corrected: SES sends only once an inbox is verified (the demo uses the console's test inbox). | `8aaa361` | — |
+| Thu 18:38–18:41 | **Real-phone rehearsal passed** (Claude drove Telegram Web in Chrome): `reset` → `seed` → `volunteer phone` → `stand-in`. Volunteer card on the phone at 18:38 ("3 घर · 212 मीटर · 71 घंटे"); tapped **हाँ, भेजें** → confirmation + Hindi warning text + 0:24 Polly voice note at 18:39; `ward-reply Resolved` → "asking the residents first" + पानी साफ़ है? at 18:39; tapped **नहीं** → "answer recorded" + reopen text + 0:07 voice note at 18:40. Console: chip "reopened ×1" (red), mail stored, feed incident → warned → ward_says_resolved → reopened. Buttons vanish after a tap. Then `reset` (1 case stopped, 237 rows; Aryan's 13:16 report kept). Fixed on the way: `scenario.py status` crashed on incident event rows. | `f440338` | ✅ whole chain on the real phone, ~3 min |
 
 **Tests:** 48 passing (`.venv/bin/python -m pytest -q`): agent mode with a scripted model (PII email DENY → redraft, close DENY → check-ins, brief checked by code, 6-call limit, fallback to templates), console API hides Telegram ids + rounds real homes, demo controls need the token and only answer for simulated homes, full case (brief, only the volunteer can approve, 23 warned / 20 never complained, email has no ids, ward claim → DENY, नहीं → REOPENED, 3 clean → CLOSED_AT_TAP), warning without approval DENY, closure quorum incl. silence ≠ closed, 5 Cedar policy tests, demo story end to end (3 homes · 212 m · 71 h, 23 enrolled in the ring, 20 never complained), one building + reset keeps real homes, ring population (partial cells, NO DATA never 0), tripwire (fire at 3 homes · 212 m · 71 h, one home 300 m away, 73 h span, same home ×3, clear water never counts, one building → tank advice once, 4th report joins, two simultaneous third reports → one incident, stream re-delivery), webhook secret, joining, declining deletes data, re-delivered updates ignored, model path, button fallback incl. double tap, voice before joining, geohash, distances, field validation, receipt text, "heard but no details" wording.
 
@@ -67,11 +68,11 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
 
 ## Next
 
-1. ✅ Thu: voice pipeline, tripwire, population, demo scenario, case workflow, Cedar, console, Indore replay, README, cost, QR, preflight, writeup draft, slide cards, narration scripts + Colab notebook, video assembler.
-2. **Real-phone rehearsal (next, as soon as Telegram Web is logged in):** Claude runs it from Chrome: `scenario.py reset` → `seed` → `volunteer phone` → `stand-in` (third report) → tap **हाँ, भेजें** → check the warning text + voice arrive → `ward-reply Resolved` → tap **नहीं** → REOPENED → `reset`. Aryan's 13:16 test report stays. Real messages reach the phone during the run.
+1. ✅ Thu: voice pipeline, tripwire, population, demo scenario, case workflow, Cedar, console, Indore replay, README, cost, QR, preflight, writeup draft, slide cards, narration scripts + Colab notebook, video assembler, real-phone rehearsal (18:41).
+2. ✅ Real-phone rehearsal passed 18:41 (see Done). With the stand-in the ring has 24 homes (24 warned, 21 never complained); in the recording run the phone files the third report itself, so it is 23 / 20, matching the shot 9 caption.
 3. **When Bedrock quota arrives:** set `AGENT_MODE` to `agent` in `infra/stack.py`, deploy, run one full case; Nova extraction starts working by itself (voice notes stop falling back to buttons). Shots 6 (Nova JSON), 10 (PII DENY) and 11 ("the agent tries close_case") need this. **Fri 10:00 IST cutoff:** record in template mode (`voiceover-template.md`, `build_cards.py --mode template`, `build_video.py --mode template`; the DENY is then the ward office's close request) or wait.
 4. **Needs Aryan:**
-   - (a) Link Telegram Web: phone → Settings → Devices → Link Desktop Device → scan the QR in the Chrome tab.
+   - (a) ✅ Telegram Web linked (18:37).
    - (b) Send the AWS support reply in `~/aws_environment/SEND-QUEUE.md`.
    - (c) Decide slot 2: "Thirty-six died." or the ALT "Dozens died." (the source says 36 deaths *examined*, 24 linked; Wikipedia 32).
    - (d) Run `video/narration/narration-chatterbox.ipynb` on a Colab T4 (~30 min; covers every variant), then listen to how "Teesri Shikayat" is pronounced.
@@ -83,6 +84,6 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
 
 - **Bedrock quota is 0** for every model and region tried (Nova throttled, Claude AccessDenied). Quota requests for Nova 2 Lite still `CASE_OPENED` (re-checked 17:52). Voice notes fall back to buttons; the case agent runs in template mode.
 - **Deadline hour still TBA:** schedule page re-checked Thu 17:50 ("the hours are being finalised"). Rules page: a submission is a public repo, a YouTube video up to 3 minutes (public or unlisted), and a short writeup (problem, build, where AWS fits); the form closes hard. Form link and fields not published yet.
-- Telegram Desktop can't be driven from this machine (Wayland, no automation); phone steps go through Telegram Web in Chrome, which needs a one-time QR link from the phone.
+- Telegram Desktop can't be driven from this machine (Wayland, no automation); phone steps go through Telegram Web in Chrome (linked 18:37). Recording still needs the real phone screen (shots 5, 6, 8, 9, 11).
 - The shot 9 caption ("20 of 23 … All 23") is fixed text in `video/edl.json`; check it against the console after the recording run.
 - A brand-new Pipe starts reading the stream a minute or two after it says RUNNING (starting position LATEST). Not a problem once it has been running; for the demo it is deployed days ahead.
