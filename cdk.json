@@ -1,0 +1,6 @@
+{
+  "app": ".venv/bin/python infra/app.py",
+  "watch": {
+    "include": ["src/**", "infra/**"]
+  }
+}
