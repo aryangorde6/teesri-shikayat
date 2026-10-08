@@ -48,7 +48,7 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
 
 ## Next (from the plan)
 
-1. **Move the phone's home pin to Dongri** (📎 → Location → drag the pin; the bot replies "लोकेशन अपडेट हो गई"). It's currently ~18 km away, outside any demo ring.
+1. ✅ Phone home pin set to Dongri, B ward (18.9622, 72.8368, OpenStreetMap) directly in the table: Telegram on a computer cannot send a chosen location. To change it from the phone app: 📎 → Location → search the place → tap it. The 13:15 test report stays at the old spot, outside any ring; clear test data before recording.
 2. **Thu night:** GHS-POP population for the ring ("~N people", "NO DATA" never 0); demo scenario script (22 simulated homes A–V, demo clock).
 3. **Fri AM:** Step Functions case (named by incident id) → Strands agent brief → volunteer approval (task token) → Polly warning to every enrolled home in the ring + SES email to the ward office.
 4. **Fri PM:** Cedar on every action + Safety tab trace; ward office "resolved" → agent `close_case` DENY → check-ins → REOPENED / CLOSED_AT_TAP.

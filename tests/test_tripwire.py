@@ -7,7 +7,7 @@ from moto import mock_aws
 
 from teesri import channel, store, texts, tripwire, voice
 
-LAT, LON = 18.9580, 72.8320  # Dongri, Mumbai
+LAT, LON = 18.9622, 72.8368  # Dongri, B ward, Mumbai (OpenStreetMap)
 M_PER_DEG = 6_371_000 * math.pi / 180
 _n = itertools.count()
 

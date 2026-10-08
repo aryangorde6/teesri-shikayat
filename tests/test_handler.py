@@ -51,7 +51,7 @@ def tap(data):
 
 def join():
     post(msg(text="/start B"))
-    post(msg(location={"latitude": 18.958, "longitude": 72.832}))
+    post(msg(location={"latitude": 18.9622, "longitude": 72.8368}))
     post(tap("consent|yes"))
 
 
@@ -70,7 +70,7 @@ def test_enrolment_needs_location_then_consent(env):
 
 
 def test_declining_consent_deletes_everything(env):
-    post(msg(location={"latitude": 18.958, "longitude": 72.832}))
+    post(msg(location={"latitude": 18.9622, "longitude": 72.8368}))
     post(tap("consent|no"))
     assert store.get_household(ME) is None
 

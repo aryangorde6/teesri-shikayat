@@ -6,7 +6,7 @@ def test_geohash_known_value():
 
 
 def test_cells_around_cover_250m_in_every_direction():
-    lat, lon = 18.9580, 72.8320  # Dongri, Mumbai
+    lat, lon = 18.9622, 72.8368  # Dongri, B ward, Mumbai (OpenStreetMap)
     cells = geo.cells_around(lat, lon)
     assert len(cells) == 9
     for dlat, dlon in [(0.00225, 0), (-0.00225, 0), (0, 0.0024), (0, -0.0024)]:  # ~250 m
@@ -14,7 +14,7 @@ def test_cells_around_cover_250m_in_every_direction():
 
 
 def test_distance_m():
-    assert 240 < geo.distance_m(18.9580, 72.8320, 18.96025, 72.8320) < 260
+    assert 240 < geo.distance_m(18.9622, 72.8368, 18.96445, 72.8368) < 260
 
 
 def test_validate_keeps_only_allowed_values():
