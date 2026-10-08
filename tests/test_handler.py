@@ -123,3 +123,11 @@ def test_stop_deletes_the_home(env):
     join()
     post(msg(text="बंद"))
     assert store.get_household(ME) is None and env[-1][2] == texts.LEFT
+
+
+def test_a_telegram_hiccup_tidying_buttons_does_not_lose_the_answer(env, monkeypatch):
+    def boom(*a):
+        raise RuntimeError("telegram editMessageReplyMarkup failed: message is not modified")
+    monkeypatch.setattr(telegram, "clear_buttons", boom)
+    join()
+    assert store.is_enrolled(store.get_household(ME))

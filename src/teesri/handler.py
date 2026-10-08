@@ -106,9 +106,12 @@ def on_voice(hh_id: str, msg: dict) -> None:
 
 
 def on_button(cq: dict) -> None:
-    telegram.answer_callback(cq["id"])
     chat_id, data = cq["message"]["chat"]["id"], cq.get("data", "")
-    telegram.clear_buttons(chat_id, cq["message"]["message_id"])  # one answer per question
+    try:  # housekeeping only: a Telegram hiccup here must not lose the answer itself
+        telegram.answer_callback(cq["id"])
+        telegram.clear_buttons(chat_id, cq["message"]["message_id"])  # one answer per question
+    except Exception:
+        log.warning("could not tidy buttons for %s", chat_id, exc_info=True)
     hh_id = f"tg{chat_id}"
     kind, *rest = data.split("|")
     if kind == "consent":
