@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teesri Shikayat Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root {
+  --bg: #0f1419; --panel: #161d24; --panel2: #1d262f; --line: #2a3540; --text: #e7edf2; --muted: #8a99a8;
+  --red: #ef4444; --red-bg: rgba(239,68,68,.14); --amber: #f59e0b; --amber-bg: rgba(245,158,11,.16);
+  --green: #22c55e; --green-bg: rgba(34,197,94,.14); --blue: #38bdf8;
+  --font: "Noto Sans", "Noto Sans Devanagari", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+:root[data-theme="light"] {
+  --bg: #f4f6f8; --panel: #ffffff; --panel2: #f0f3f6; --line: #dde3e9; --text: #111820; --muted: #5b6875;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); }
+body { display: flex; flex-direction: column; min-height: 100vh; }
+header { display: flex; align-items: center; gap: 14px; padding: 10px 18px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
+.brand { font-weight: 700; font-size: 19px; letter-spacing: .2px; }
+.brand small { display: block; font-weight: 400; font-size: 12.5px; color: var(--muted); }
+.chip { font: 600 12.5px var(--mono); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel2); white-space: nowrap; }
+.chip.red { color: var(--red); border-color: var(--red); background: var(--red-bg); }
+.chip.amber { color: var(--amber); border-color: var(--amber); background: var(--amber-bg); }
+.chip.green { color: var(--green); border-color: var(--green); background: var(--green-bg); }
+.spacer { flex: 1; }
+button { font: 600 13px var(--font); color: var(--text); background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+button:hover { border-color: var(--blue); }
+button.primary { background: var(--blue); color: #001018; border-color: var(--blue); }
+main { flex: 1; display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; padding: 12px; min-height: 0; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+#mapwrap { position: relative; flex: 1; min-height: 420px; }
+#map { position: absolute; inset: 0; }
+.overlay { position: absolute; z-index: 500; left: 12px; top: 12px; max-width: 360px; background: rgba(15,20,25,.92); color: #e7edf2; border: 1px solid var(--red); border-radius: 10px; padding: 12px 14px; display: none; }
+.overlay .big { font: 700 20px var(--mono); color: #fca5a5; }
+.overlay .sub { font-size: 13px; margin-top: 4px; color: #cbd5e1; }
+.legend { position: absolute; z-index: 500; right: 12px; bottom: 22px; background: rgba(15,20,25,.88); color: #e7edf2; border-radius: 8px; padding: 8px 10px; font-size: 12px; line-height: 1.7; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.toast { position: absolute; z-index: 600; left: 50%; bottom: 26px; transform: translateX(-50%); background: var(--green-bg); color: var(--green); border: 1px solid var(--green); padding: 10px 16px; border-radius: 10px; font-weight: 700; display: none; backdrop-filter: blur(4px); }
+.tabs { display: flex; border-bottom: 1px solid var(--line); }
+.tabs button { flex: 1; border: 0; border-radius: 0; background: transparent; padding: 11px 6px; color: var(--muted); border-bottom: 2px solid transparent; }
+.tabs button.on { color: var(--text); border-bottom-color: var(--blue); }
+.tabs .count { font: 600 11px var(--mono); margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--panel2); }
+.tabs .count.deny { background: var(--red); color: white; }
+.pane { display: none; overflow: auto; padding: 12px; flex: 1; min-height: 0; }
+.pane.on { display: block; }
+.walltitle { display: flex; justify-content: space-between; color: var(--muted); font-size: 12.5px; margin: 0 2px 8px; }
+.wall { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.phone { border: 1px solid var(--line); border-radius: 10px; padding: 7px 8px; background: var(--panel2); min-height: 92px; position: relative; transition: background .4s, border-color .4s; }
+.phone h4 { margin: 0 0 4px; font-size: 12px; display: flex; justify-content: space-between; color: var(--muted); font-weight: 600; }
+.phone .msg { font-size: 12.5px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.phone.reported { border-color: var(--red); background: var(--red-bg); }
+.phone.warned { border-color: var(--amber); background: var(--amber-bg); }
+.phone.pulse { animation: pulse 1.6s ease-out 2; }
+.phone.clean { border-color: var(--green); background: var(--green-bg); }
+.phone.real { border-style: dashed; }
+.phone .acts { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
+.phone .acts button { padding: 2px 6px; font-size: 11px; border-radius: 6px; }
+.voice { font: 600 11px var(--mono); color: var(--blue); cursor: pointer; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(245,158,11,.7); } 100% { box-shadow: 0 0 0 12px rgba(245,158,11,0); } }
+.steps { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.steps span { font-size: 12px; padding: 5px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.steps span.done { color: var(--text); border-color: var(--blue); }
+.steps span.now { color: #001018; background: var(--amber); border-color: var(--amber); font-weight: 700; }
+.steps span.bad { color: white; background: var(--red); border-color: var(--red); font-weight: 700; }
+.steps span.good { color: #001018; background: var(--green); border-color: var(--green); font-weight: 700; }
+.brief { background: var(--panel2); border-left: 3px solid var(--blue); padding: 10px 12px; border-radius: 6px; font-size: 15px; line-height: 1.5; margin-bottom: 10px; }
+.label { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin: 12px 0 6px; }
+.feed div { padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 13.5px; }
+.feed time { font: 12px var(--mono); color: var(--muted); margin-right: 8px; }
+.evt { display: grid; grid-template-columns: 64px 1fr auto; gap: 8px; align-items: center; padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 13px; }
+.evt time { font: 12px var(--mono); color: var(--muted); }
+.evt code { font: 600 13px var(--mono); }
+.evt .why { color: var(--muted); font-size: 12px; }
+.evt b { font: 700 12px var(--mono); padding: 3px 8px; border-radius: 6px; }
+.evt b.ALLOW { color: var(--green); background: var(--green-bg); }
+.evt b.DONE { color: var(--blue); background: rgba(56,189,248,.12); }
+.evt.DENY { background: var(--red-bg); border: 1px solid var(--red); border-radius: 8px; padding: 12px 10px; margin: 6px 0; }
+.evt.DENY code { font-size: 17px; }
+.evt.DENY .why { color: #fca5a5; font-size: 14px; font-weight: 600; }
+.evt.DENY b { color: white; background: var(--red); font-size: 15px; }
+.mail { background: var(--panel2); border-radius: 8px; padding: 12px; }
+.mail .subj { font-weight: 700; margin-bottom: 6px; }
+.mail pre { white-space: pre-wrap; font: 13px/1.5 var(--font); margin: 0; }
+.mail .meta { font: 12px var(--mono); color: var(--muted); margin-bottom: 8px; }
+.empty { color: var(--muted); font-size: 13.5px; padding: 18px 4px; }
+footer { padding: 6px 18px 10px; color: var(--muted); font-size: 11.5px; }
+dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 16px; width: min(560px, 92vw); }
+dialog::backdrop { background: rgba(0,0,0,.5); }
+dialog .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+dialog input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); font: 13px var(--mono); }
+#out { font: 12px var(--mono); color: var(--muted); margin-top: 10px; white-space: pre-wrap; max-height: 120px; overflow: auto; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } .wall { grid-template-columns: repeat(2, minmax(0, 1fr)); } header { padding: 10px 16px; } main { padding: 10px 16px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Teesri Shikayat <small>a tripwire for dirty tap water · Dongri, B ward, Mumbai</small></div>
+  <span id="status" class="chip">no incident</span>
+  <span id="clock" class="chip amber" style="display:none">+2 days (demo clock)</span>
+  <span class="spacer"></span>
+  <button id="theme" title="Light / dark">◐</button>
+  <button id="openControls">Demo controls</button>
+</header>
+<main>
+  <section class="card">
+    <div id="mapwrap">
+      <div id="map"></div>
+      <div id="ringcard" class="overlay"><div class="big" id="ringbig"></div><div class="sub" id="ringsub"></div><div class="sub" id="ringpop"></div></div>
+      <div class="legend">
+        <div><span class="dot" style="background:#94a3b8"></span>enrolled home</div>
+        <div><span class="dot" style="background:#ef4444"></span>reported dirty water</div>
+        <div><span class="dot" style="background:#f59e0b"></span>warned</div>
+        <div><span class="dot" style="background:#22c55e"></span>says the tap is clean</div>
+      </div>
+      <div id="toast" class="toast"></div>
+    </div>
+  </section>
+  <section class="card">
+    <div class="tabs">
+      <button data-tab="wall" class="on">Phone wall</button>
+      <button data-tab="case">Case</button>
+      <button data-tab="safety">Safety<span id="denyCount" class="count">0</span></button>
+      <button data-tab="inbox">Test inbox</button>
+    </div>
+    <div id="wall" class="pane on"></div>
+    <div id="case" class="pane"></div>
+    <div id="safety" class="pane"></div>
+    <div id="inbox" class="pane"></div>
+  </section>
+</main>
+<footer>Simulated homes A–V are labelled as such; "My phone" is the only real one. Not affiliated with BMC or any water board. Population: GHS-POP 2025 (European Commission JRC, CC BY 4.0) via the Registry of Open Data on AWS. Map © OpenStreetMap contributors.</footer>
+
+<dialog id="controls">
+  <div style="display:flex;justify-content:space-between;align-items:center"><b>Demo controls</b><button id="closeControls">Close</button></div>
+  <div class="label">Console token (from SSM /teesri/console-token; kept in this browser only)</div>
+  <input id="token" type="password" autocomplete="off" placeholder="paste the console token">
+  <div class="grid">
+    <button data-act="reset">Reset demo</button>
+    <button data-act="seed" class="primary">Seed 22 homes + A, B</button>
+    <button data-act="building">One building reports (tank)</button>
+    <button data-act="stand_in">Stand-in 3rd report (no phone)</button>
+    <button data-act="approve">Simulated volunteer: हाँ, भेजें</button>
+    <button data-act="ward_reply">+2 days → ward office: "Resolved"</button>
+    <button data-act="volunteer" data-who="sim">Volunteer = simulated</button>
+    <button data-act="volunteer" data-who="phone">Volunteer = my phone</button>
+  </div>
+  <div id="out"></div>
+</dialog>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const ist = (ts, sec) => ts ? new Date(ts).toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", ...(sec ? { second: "2-digit" } : {}) }) : "";
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+                set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const theme = store.get("theme"); if (theme) document.documentElement.dataset.theme = theme;
+$("#theme").onclick = () => { const t = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+  document.documentElement.dataset.theme = t; store.set("theme", t); };
+
+// --- map --------------------------------------------------------------------------------------
+const map = L.map("map", { zoomControl: false }).setView([18.9619, 72.8368], 17);
+L.control.zoom({ position: "topright" }).addTo(map);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors" }).addTo(map);
+const markers = {}; let ring = null, ringId = null;
+function colour(h) {
+  if (h.checkin === true) return "#22c55e";
+  if (h.reported && (h.member || !h.warned)) return "#ef4444";
+  if (h.warned) return "#f59e0b";
+  return "#94a3b8";
+}
+function drawMap(s) {
+  const seen = new Set();
+  for (const h of s.homes) {
+    seen.add(h.id);
+    const c = colour(h), r = h.sim ? 7 : 10;
+    if (!markers[h.id]) markers[h.id] = L.circleMarker([h.lat, h.lon], { radius: r, weight: h.sim ? 1.5 : 3, color: "#0f1419", fillOpacity: .95 })
+      .addTo(map).bindTooltip(esc(h.label));
+    markers[h.id].setLatLng([h.lat, h.lon]).setStyle({ fillColor: c, color: h.sim ? "#0f1419" : "#38bdf8" });
+  }
+  for (const id of Object.keys(markers)) if (!seen.has(id)) { map.removeLayer(markers[id]); delete markers[id]; }
+  const inc = s.incident;
+  if (inc && ringId !== inc.inc_id) {
+    if (ring) map.removeLayer(ring);
+    ring = L.circle([inc.lat, inc.lon], { radius: inc.ring_m, color: "#ef4444", weight: 3, fillColor: "#ef4444", fillOpacity: .08 }).addTo(map);
+    ringId = inc.inc_id; map.flyTo([inc.lat, inc.lon], 17, { duration: .8 });
+  }
+  if (!inc && ring) { map.removeLayer(ring); ring = null; ringId = null; }
+  const card = $("#ringcard");
+  if (inc) {
+    const f = inc.fired, pop = typeof inc.ring_pop === "number" ? "~" + (Math.round(inc.ring_pop / 100) * 100).toLocaleString("en-IN") : inc.ring_pop;
+    $("#ringbig").textContent = `${f.homes} homes · ${f.spread_m} m · ${Math.round(f.span_h)} h`;
+    $("#ringsub").textContent = "→ likely pipe-leak zone (tripwire rule, no AI)";
+    $("#ringpop").textContent = `${pop} people live within 250 m (GHS-POP 2025, Open Data on AWS)`;
+    card.style.display = "block";
+  } else card.style.display = "none";
+}
+
+// --- panels -----------------------------------------------------------------------------------
+const STEPS = [["OPEN", "Tripwire"], ["AWAITING_APPROVAL", "Volunteer"], ["WARNED", "Ring warned"], ["AWAITING_WARD", "Ward office"],
+               ["CLAIMED_RESOLVED", "“Resolved”"], ["CHECKING", "Residents asked"], ["END", "Closed at the tap?"]];
+const ORDER = ["OPEN","PREPARED","AWAITING_APPROVAL","WARNING","WARNED","WARD_NOTIFIED","AWAITING_WARD","CLAIMED_RESOLVED","CHECKING","REOPENED","CLOSED_AT_TAP","STILL_OPEN"];
+function statusChip(inc) {
+  const el = $("#status");
+  if (!inc) { el.className = "chip"; el.textContent = "no incident"; return; }
+  const st = inc.status;
+  el.textContent = `${inc.inc_id} · ${st}${inc.reopen_count ? " · reopened ×" + inc.reopen_count : ""}`;
+  el.className = "chip " + (st === "CLOSED_AT_TAP" ? "green" : st === "REOPENED" || inc.reopen_count ? "red" : "amber");
+  $("#clock").style.display = ORDER.indexOf(st) >= ORDER.indexOf("CLAIMED_RESOLVED") || inc.reopen_count ? "inline-block" : "none";
+}
+function wallHtml(s) {
+  const ring = s.homes.filter((h) => h.sim && /^sim-[A-V]$/.test(h.id));
+  const other = s.homes.filter((h) => !(h.sim && /^sim-[A-V]$/.test(h.id)));
+  const cell = (h) => {
+    const last = h.messages[h.messages.length - 1];
+    const text = h.messages.filter((m) => m.kind === "text").pop();
+    const voice = h.messages.filter((m) => m.kind === "voice" && m.audio_key).pop();
+    const wide = h.id === s.volunteer && h.sim ? " style=\"grid-column: span 2\"" : "";
+    const fresh = h.warned && !prevWarned.has(h.id) ? "pulse" : "";
+    const cls = [fresh, "phone", h.checkin === true ? "clean" : h.checkin === false ? "reported" : h.warned && !h.member ? "warned" : h.reported ? "reported" : "", h.sim ? "" : "real"].join(" ");
+    const btn = last && last.buttons.length ? last.buttons[0][0].data : "";
+    const ck = btn.startsWith("ck|") && h.checkin == null && h.sim;
+    const ap = btn.startsWith("ap|") && h.sim && s.incident && s.incident.status === "AWAITING_APPROVAL";
+    const name = h.sim ? h.id.replace("sim-", "Home ").replace("Home bldg-", "Flat ").replace("Home vol", "Volunteer").replace("Home me", "Stand-in") : "My phone (real)";
+    return `<div class="${cls}"${wide}><h4><span>${esc(name)}</span><span>${h.checkin === true ? "✓ clean" : h.checkin === false ? "✗ dirty" : h.member ? "reported" : h.warned ? "warned" : ""}</span></h4>
+      <div class="msg">${text ? esc(text.text) : h.sim ? "—" : "messages go to Telegram"}</div>
+      <div class="acts">${voice ? `<span class="voice" data-audio="${esc(voice.audio_key)}">▶ voice</span>` : ""}
+      ${ck ? `<button data-answer="${esc(h.id.replace("sim-", ""))}" data-clean="1">हाँ, साफ़</button><button data-answer="${esc(h.id.replace("sim-", ""))}" data-clean="0">नहीं</button>` : ""}
+      ${ap ? `<button data-act2="approve">हाँ, भेजें</button><button data-act2="hold">अभी नहीं</button>` : ""}</div></div>`;
+  };
+  const warned = s.incident ? s.homes.filter((h) => h.warned).length : 0;
+  const never = s.incident ? s.homes.filter((h) => h.warned && !h.member).length : 0;
+  return `<div class="walltitle"><span>Simulated homes A–V (+ my real phone)</span><span>${warned ? `${never} of ${warned} enrolled homes never complained. All ${warned} were warned.` : ""}</span></div>
+    <div class="wall">${ring.map(cell).join("")}${other.map(cell).join("")}</div>`;
+}
+function caseHtml(s) {
+  const inc = s.incident;
+  if (!inc) return `<div class="empty">No incident yet. Two neighbours' reports alone are not an alarm; the third close-by report is.</div>${feedHtml(s)}`;
+  const i = ORDER.indexOf(inc.status);
+  const steps = STEPS.map(([st, label]) => {
+    let c = ORDER.indexOf(st) < i ? "done" : ORDER.indexOf(st) === i ? "now" : "";
+    if (st === "END") { label = inc.status === "CLOSED_AT_TAP" ? "CLOSED_AT_TAP" : inc.status === "REOPENED" || inc.reopen_count ? "REOPENED" : inc.status === "STILL_OPEN" ? "STILL_OPEN" : label;
+      c = inc.status === "CLOSED_AT_TAP" ? "good" : (inc.status === "REOPENED" || inc.reopen_count) ? "bad" : c; }
+    return `<span class="${c}">${esc(label)}</span>`;
+  }).join("");
+  return `<div class="steps">${steps}</div>
+    <div class="label">Case agent's brief to the volunteer ${inc.brief_mode === "template" ? "(template mode)" : ""} ${s.volunteer === "phone-1" ? "· demo: my phone plays the volunteer" : ""}</div>
+    <div class="brief">${esc(inc.brief_hi) || "…"}</div>
+    ${inc.claim ? `<div class="label">Ward office reply</div><div class="brief" style="border-color:var(--amber)">“${esc(inc.claim)}” — only residents can close the case</div>` : ""}
+    ${feedHtml(s)}`;
+}
+function feedHtml(s) {
+  const say = (f) => ({
+    incident: `Tripwire: ${f.homes} homes · ${f.spread_m} m · ${Math.round(f.span_h)} h → incident`,
+    one_building: "One building's tank: no alarm ✓ (tank advice sent to those flats)",
+    joined: "Another report inside the ring joined the incident",
+    warned: `Warned ${f.homes} homes · ${f.never_complained} never complained`,
+    ward_says_resolved: `Ward office: “${f.claim}”`,
+    reopened: `Residents: ${f.not_clean} said not clean → REOPENED`,
+    closed_at_tap: `Residents: ${f.clean} said clean, none dirty → CLOSED_AT_TAP`,
+    still_open: "Too few answers → STILL_OPEN (silence never closes a case)",
+    unapproved: "Volunteer did not answer → UNAPPROVED (no warning sent)", held: "Volunteer: not now → HELD",
+  }[f.decision] || f.decision);
+  const rows = s.feed.slice().reverse().map((f) => `<div><time>${esc(ist(f.ts))}</time>${esc(say(f))}</div>`).join("");
+  return `<div class="label">Timeline</div><div class="feed">${rows || '<div class="empty">Nothing yet.</div>'}</div>`;
+}
+function safetyHtml(s) {
+  if (!s.events.length) return `<div class="empty">Every action asks Cedar first. Decisions appear here.</div>`;
+  const groups = [];
+  for (const e of s.events) {
+    const g = groups[groups.length - 1];
+    if (g && e.decision !== "DENY" && g.e.action === e.action && g.e.decision === e.decision && g.e.actor === e.actor) g.n++;
+    else groups.push({ e, n: 1 });
+  }
+  return groups.map(({ e, n }) => `<div class="evt ${esc(e.decision)}"><time>${esc(ist(e.ts, true))}</time>
+    <div><code>${esc(e.actor)} → ${esc(e.action)}${n > 1 ? " ×" + n : ""}</code><div class="why">${e.decision === "DENY" ? esc(e.reason) + " · policy " + esc(e.policy) : esc(e.reason || "")}</div></div>
+    <b class="${esc(e.decision)}">${e.decision === "DENY" ? "✗ DENY" : e.decision === "ALLOW" ? "✓ ALLOW" : esc(e.decision)}</b></div>`).join("");
+}
+function inboxHtml(s) {
+  if (!s.mail) return `<div class="empty">The ward office email appears here once the warning has gone out.</div>`;
+  const m = s.mail;
+  return `<div class="mail"><div class="meta">to: ${esc(m.to === "console-test-inbox" ? "Ward office (test inbox)" : m.to)} · ${esc(ist(m.ts))} IST · ${esc(m.via)}</div>
+    <div class="subj">${esc(m.subject)}</div><pre>${esc(m.body)}</pre></div>`;
+}
+
+// --- loop -------------------------------------------------------------------------------------
+let seenTank = null, firstLoad = true, prevWarned = new Set();
+async function refresh() {
+  try {
+    const s = await (await fetch("api/state", { cache: "no-store" })).json();
+    drawMap(s); statusChip(s.incident);
+    $("#wall").innerHTML = wallHtml(s); prevWarned = new Set(s.homes.filter((h) => h.warned).map((h) => h.id));
+    $("#case").innerHTML = caseHtml(s);
+    $("#safety").innerHTML = safetyHtml(s); $("#inbox").innerHTML = inboxHtml(s);
+    const denies = s.events.filter((e) => e.decision === "DENY").length;
+    $("#denyCount").textContent = denies; $("#denyCount").className = "count" + (denies ? " deny" : "");
+    const tank = s.feed.filter((f) => f.decision === "one_building").pop();
+    const key = tank ? tank.ts + tank.rpt_id : null;
+    if (key && key !== seenTank && !firstLoad) toast("One building's tank: no alarm ✓");
+    seenTank = key; firstLoad = false;
+  } catch (e) { console.error(e); }
+}
+function toast(t) { const el = $("#toast"); el.textContent = t; el.style.display = "block"; setTimeout(() => (el.style.display = "none"), 6000); }
+document.querySelectorAll(".tabs button").forEach((b) => (b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach((x) => x.classList.toggle("on", x === b));
+  document.querySelectorAll(".pane").forEach((p) => p.classList.toggle("on", p.id === b.dataset.tab));
+  store.set("tab", b.dataset.tab);
+}));
+const tab = store.get("tab"); if (tab) document.querySelector(`.tabs button[data-tab="${tab}"]`)?.click();
+document.addEventListener("click", async (ev) => {
+  const a = ev.target.closest("[data-audio]");
+  if (a) new Audio("api/audio?key=" + encodeURIComponent(a.dataset.audio)).play();
+  const ans = ev.target.closest("[data-answer]");
+  if (ans) act({ action: "answer", home: ans.dataset.answer, clean: ans.dataset.clean === "1" });
+  const a2 = ev.target.closest("[data-act2]");
+  if (a2) act({ action: a2.dataset.act2 });
+});
+
+// --- demo controls ------------------------------------------------------------------------------
+$("#token").value = store.get("consoleToken") || "";
+$("#openControls").onclick = () => $("#controls").showModal();
+$("#closeControls").onclick = () => $("#controls").close();
+$("#token").onchange = () => store.set("consoleToken", $("#token").value.trim());
+document.querySelectorAll("[data-act]").forEach((b) => (b.onclick = () => act({ action: b.dataset.act, who: b.dataset.who })));
+async function act(body) {
+  $("#out").textContent = "…";
+  try {
+    const r = await fetch("api/action", { method: "POST", headers: { "content-type": "application/json", "x-console-token": $("#token").value.trim() }, body: JSON.stringify(body) });
+    $("#out").textContent = `${body.action}: ${r.status} ${JSON.stringify((await r.json()).result ?? "")}`.slice(0, 600);
+  } catch (e) { $("#out").textContent = String(e); }
+  refresh();
+}
+refresh(); setInterval(refresh, 2000);
+</script>
+</body>
+</html>

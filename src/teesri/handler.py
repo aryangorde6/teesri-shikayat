@@ -1,13 +1,14 @@
-"""The single Lambda. Entry points:
-- Function URL: GET / (health), POST /tg (Telegram webhook)
+"""The API Lambda. Entry points:
+- Function URL: GET / (health), POST /tg (Telegram webhook), GET /console + /api/* (the demo console)
 - EventBridge: a Transcribe job finished -> extract fields -> report -> Hindi receipt
 """
 import base64
 import hmac
 import json
 import logging
+import pathlib
 
-from teesri import channel, extract, store, telegram, texts, voice, workflow
+from teesri import api, channel, extract, store, telegram, texts, voice, workflow
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -22,6 +23,18 @@ def main(event, context):
         return _telegram(event)
     if method == "GET" and path == "/":
         return _resp(200, "Teesri Shikayat is running.")
+    if method == "GET" and path == "/console":
+        return _resp(200, (pathlib.Path(__file__).parent / "web" / "console.html").read_text(), "text/html")
+    if method == "GET" and path == "/api/state":
+        return _json(200, api.state())
+    if method == "GET" and path == "/api/audio":
+        url = api.audio_url((event.get("queryStringParameters") or {}).get("key", ""))
+        return {"statusCode": 302, "headers": {"location": url}} if url else _resp(404, "not found")
+    if method == "POST" and path == "/api/action":
+        body = event.get("body") or ""
+        if event.get("isBase64Encoded"):
+            body = base64.b64decode(body).decode()
+        return _json(*api.action(event.get("headers") or {}, body))
     return _resp(404, "not found")
 
 
@@ -170,5 +183,10 @@ def finalize(rpt_id: str, hh: dict, fields: dict, source: str, transcript: str =
     channel.send_voice(hh_id, voice.speak(text))
 
 
-def _resp(status: int, text: str) -> dict:
-    return {"statusCode": status, "headers": {"content-type": "text/plain; charset=utf-8"}, "body": text}
+def _resp(status: int, text: str, kind: str = "text/plain") -> dict:
+    return {"statusCode": status, "headers": {"content-type": f"{kind}; charset=utf-8"}, "body": text}
+
+
+def _json(status: int, data: dict) -> dict:
+    return {"statusCode": status, "headers": {"content-type": "application/json", "cache-control": "no-store"},
+            "body": json.dumps(data, ensure_ascii=False, default=lambda d: int(d) if d == int(d) else float(d))}

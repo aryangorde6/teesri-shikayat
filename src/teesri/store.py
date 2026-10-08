@@ -79,7 +79,7 @@ def log_event(kind: str, **data) -> None:
 
 def scan_prefix(prefix: str, keys_only: bool = False) -> list[dict]:
     """Every item whose PK starts with prefix. Demo-scale admin use only (scenario, reset), never per request."""
-    kw = {"FilterExpression": Attr("PK").begins_with(prefix)}
+    kw = {"FilterExpression": Attr("PK").begins_with(prefix)} if prefix else {}
     if keys_only:
         kw["ProjectionExpression"] = "PK, SK"
     out = []

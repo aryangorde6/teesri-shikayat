@@ -22,6 +22,7 @@ TOKEN_PARAM = "/teesri/telegram/bot-token"
 SECRET_PARAM = "/teesri/telegram/webhook-secret"
 WARD_INBOX_PARAM = "/teesri/ward-inbox"  # optional; unset = the console test inbox
 MAIL_FROM_PARAM = "/teesri/mail-from"
+CONSOLE_TOKEN_PARAM = "/teesri/console-token"  # demo controls on the console
 
 
 class TeesriStack(Stack):
@@ -60,6 +61,7 @@ class TeesriStack(Stack):
             "MODEL_ID": "global.amazon.nova-2-lite-v1:0",
             "WARD_INBOX_PARAM": WARD_INBOX_PARAM,
             "MAIL_FROM_PARAM": MAIL_FROM_PARAM,
+            "CONSOLE_TOKEN_PARAM": CONSOLE_TOKEN_PARAM,
             "DEMO_CLOCK": "1",  # labelled "demo clock" on screen
             "AGENT_MODE": "template",  # "agent" once Bedrock quota arrives
         }
@@ -199,6 +201,8 @@ class TeesriStack(Stack):
             state_machine_type=sfn.StateMachineType.STANDARD, timeout=Duration.days(30))
         machine.grant_start_execution(tripwire)
         machine.grant_task_response(fn)
+        machine.grant_read(fn)  # console reset lists running cases...
+        machine.grant_execution(fn, "states:StopExecution")  # ...and stops them
         for f in (fn, tripwire):
             f.add_environment("STATE_MACHINE_ARN", machine.state_machine_arn)
 
