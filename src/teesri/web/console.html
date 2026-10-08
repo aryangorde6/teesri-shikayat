@@ -95,7 +95,13 @@ dialog::backdrop { background: rgba(0,0,0,.5); }
 dialog .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
 dialog input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); font: 13px var(--mono); }
 #out { font: 12px var(--mono); color: var(--muted); margin-top: 10px; white-space: pre-wrap; max-height: 120px; overflow: auto; }
-@media (max-width: 900px) { main { grid-template-columns: 1fr; } .wall { grid-template-columns: repeat(2, minmax(0, 1fr)); } header { padding: 10px 16px; } main { padding: 10px 16px; } }
+@media (max-width: 900px) {
+  html, body { height: auto; } main { display: block; flex: none; padding: 10px 16px; } header { padding: 10px 16px; }
+  .card { margin-bottom: 12px; } #mapwrap { height: 340px; min-height: 340px; flex: none; }
+  main > .card:last-child { height: 75vh; }
+  .wall { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chip { white-space: normal; } .legend { display: none; } .overlay { max-width: calc(100% - 70px); }
+}
 </style>
 </head>
 <body>
