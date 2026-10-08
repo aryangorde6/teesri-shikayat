@@ -1,0 +1,78 @@
+{
+ "nbformat": 4,
+ "nbformat_minor": 5,
+ "metadata": {
+  "accelerator": "GPU",
+  "colab": {
+   "provenance": []
+  },
+  "kernelspec": {
+   "name": "python3",
+   "display_name": "Python 3"
+  }
+ },
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Teesri Shikayat — narration with Chatterbox\n",
+    "\n",
+    "1. **Runtime → Change runtime type → T4 GPU → Save.**\n",
+    "2. **Runtime → Run all.** If the second cell stops with an error, use **Runtime → Restart session**, then run the second cell again. It installs Chatterbox (about 3 minutes), then reads every sentence once (take a), then again (take b), about 30 minutes in all.\n",
+    "3. Every 11 sentences your browser downloads a zip (`vo-a-01-11.zip` …). Leave them in your Downloads folder. If the runtime drops, rerun the second cell: on the same runtime it skips the takes already made.\n",
+    "\n",
+    "Settings are copied from Beacon's public video/narrate.py: Chatterbox's built-in voice (no reference recording), exaggeration=0.4, cfg_weight=0.45, temperature=0.7.\n",
+    "\n",
+    "The sentences come from `video/narration/lines.json` (every variant: agent mode, template mode, the ALT line), made by `scripts/narration_lines.py`."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "metadata": {},
+   "execution_count": null,
+   "outputs": [],
+   "source": "!pip -q install chatterbox-tts==0.1.7 && pip -q uninstall -y torchvision  # Colab's torchvision is built for a newer torch and breaks transformers' import"
+  },
+  {
+   "cell_type": "code",
+   "metadata": {},
+   "execution_count": null,
+   "outputs": [],
+   "source": [
+    "import json, os, zipfile, torch, torchaudio as ta\n",
+    "from importlib.metadata import version\n",
+    "from chatterbox.tts import ChatterboxTTS\n",
+    "from google.colab import files\n",
+    "LINES = json.loads(r'''__LINES__''')\n",
+    "assert torch.cuda.is_available(), \"Runtime -> Change runtime type -> T4 GPU, then Run all again\"\n",
+    "model = ChatterboxTTS.from_pretrained(device=\"cuda\")\n",
+    "os.makedirs(\"vo\", exist_ok=True)\n",
+    "manifest = {\"chatterbox\": version(\"chatterbox-tts\"), \"torch\": torch.__version__, \"sr\": model.sr,\n",
+    "            \"settings\": {\"exaggeration\": 0.4, \"cfg_weight\": 0.45, \"temperature\": 0.7}, \"takes\": []}\n",
+    "BATCH = 11  # a zip every 11 sentences, so a dropped runtime loses at most one batch\n",
+    "for take, base in ((\"a\", 0), (\"b\", 1000)):  # every take a first: a late drop still leaves one take of each sentence\n",
+    "    for i in range(0, len(LINES), BATCH):\n",
+    "        part = LINES[i:i + BATCH]\n",
+    "        for l in part:\n",
+    "            path = f\"vo/{l['n']:02d}{take}.wav\"\n",
+    "            if os.path.exists(path):  # rerun on the same runtime: keep what is made\n",
+    "                wav, _ = ta.load(path)\n",
+    "            else:\n",
+    "                torch.manual_seed(base + l[\"n\"])\n",
+    "                wav = model.generate(l[\"say\"], exaggeration=0.4, cfg_weight=0.45, temperature=0.7)\n",
+    "                ta.save(path, wav, model.sr)\n",
+    "            secs = wav.shape[-1] / model.sr\n",
+    "            manifest[\"takes\"].append({\"n\": l[\"n\"], \"take\": take, \"seed\": base + l[\"n\"], \"seconds\": round(secs, 2), \"chars\": len(l[\"say\"])})\n",
+    "            print(f\"{l['n']:02d}{take} {secs:5.1f}s  {l['say'][:60]}\", flush=True)\n",
+    "        json.dump(manifest, open(\"vo/manifest.json\", \"w\"), indent=1)\n",
+    "        name = f\"vo-{take}-{part[0]['n']:02d}-{part[-1]['n']:02d}.zip\"\n",
+    "        with zipfile.ZipFile(name, \"w\") as z:\n",
+    "            for l in part: z.write(f\"vo/{l['n']:02d}{take}.wav\")\n",
+    "            z.write(\"vo/manifest.json\")\n",
+    "        files.download(name)\n",
+    "        print(\"downloaded\", name, flush=True)"
+   ]
+  }
+ ]
+}
