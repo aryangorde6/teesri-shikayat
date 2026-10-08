@@ -44,7 +44,7 @@
  },
  "cost_per_incident": {
   "value": "about Rs 1 ($0.011)",
-  "source": "scripts/cost_per_incident.py on the live run Thu 8 Oct 15:37 ($0.064 before making each Polly message once; same counts with the fix: ~$0.011). Re-run after the recording run for the final figure.",
+  "source": "scripts/cost_per_incident.py on a live agent-mode run Thu 8 Oct 21:26 (24 homes warned, reopened x1): $0.0108. Excludes the model instance (about 50 s of its time per incident, ~$0.006 at $0.43/h; the instance costs $0.43/h while on). Re-run after the recording run for the final figure.",
   "fx": "Rs 88/USD assumed",
   "card": "₹1",
   "detail": "24 homes warned, one reopen, about $0.011"
