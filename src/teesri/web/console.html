@@ -103,6 +103,7 @@ dialog input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid 
   <div class="brand">Teesri Shikayat <small>a tripwire for dirty tap water · Dongri, B ward, Mumbai</small></div>
   <span id="status" class="chip">no incident</span>
   <span id="clock" class="chip amber" style="display:none">+2 days (demo clock)</span>
+  <span id="quiet" class="chip red" style="display:none">rehearsal: real phones muted</span>
   <span class="spacer"></span>
   <button id="theme" title="Light / dark">◐</button>
   <button id="openControls">Demo controls</button>
@@ -331,7 +332,7 @@ let seenTank = null, firstLoad = true, prevWarned = new Set();
 async function refresh() {
   try {
     const s = await (await fetch("api/state", { cache: "no-store" })).json();
-    drawMap(s); statusChip(s.incident);
+    drawMap(s); statusChip(s.incident); $("#quiet").style.display = s.quiet ? "inline-block" : "none";
     $("#wall").innerHTML = wallHtml(s); prevWarned = new Set(s.homes.filter((h) => h.warned).map((h) => h.id));
     $("#case").innerHTML = caseHtml(s);
     $("#safety").innerHTML = safetyHtml(s); $("#inbox").innerHTML = inboxHtml(s);

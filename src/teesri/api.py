@@ -73,7 +73,8 @@ def state() -> dict:
     out = {"homes": sorted(homes, key=lambda h: (not h["sim"], h["id"])), "incident": None, "events": [], "mail": None,
            "feed": [{k: (mask(v) if isinstance(v, str) else v) for k, v in f.items() if k not in ("PK", "SK")}
                     for f in sorted((i for i in items if i["PK"] == "FEED"), key=lambda f: f["SK"])[-30:]],
-           "volunteer": public(store.get_config("volunteer").get("hh_id", ""))}
+           "volunteer": public(store.get_config("volunteer").get("hh_id", "")),
+           "quiet": bool(store.get_config("demo").get("quiet"))}
     if inc:
         out["incident"] = {
             "inc_id": inc["inc_id"], "status": inc.get("status"), "lat": float(inc["lat"]), "lon": float(inc["lon"]),
@@ -115,6 +116,7 @@ ACTIONS = {
     "hold": lambda a: scenario.approve(False),
     "ward_reply": lambda a: scenario.ward_reply(a.get("text") or "Resolved"),
     "answer": lambda a: scenario.answer(str(a["home"]), bool(a["clean"])),
+    "quiet": lambda a: scenario.set_quiet(bool(a.get("on"))),
 }
 
 

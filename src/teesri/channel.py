@@ -2,13 +2,27 @@
 
 `tg<chat_id>` -> Telegram. `sim-<x>` -> the simulated phone wall (messages stored in DynamoDB).
 A WhatsApp adapter would add one more prefix here; nothing upstream changes.
+Rehearsal "quiet mode" (CFG#demo quiet=true) holds back messages to real phones; it is off for real runs.
 """
+import logging
+
 from teesri import store, telegram
+
+log = logging.getLogger()
+
+
+def _quiet(hh_id: str) -> bool:
+    if hh_id.startswith("tg") and store.get_config("demo").get("quiet"):
+        log.info("quiet mode: not messaging %s", hh_id)
+        return True
+    return False
 
 Buttons = list[list[tuple[str, str]]]  # rows of (label, callback data)
 
 
 def send_text(hh_id: str, text: str, buttons: Buttons | None = None, location_keyboard: str | None = None) -> None:
+    if _quiet(hh_id):
+        return
     if hh_id.startswith("tg"):
         markup = None
         if buttons:
@@ -24,6 +38,8 @@ def send_text(hh_id: str, text: str, buttons: Buttons | None = None, location_ke
 
 
 def send_voice(hh_id: str, mp3: bytes, audio_key: str = "") -> None:
+    if _quiet(hh_id):
+        return
     if hh_id.startswith("tg"):
         telegram.send_voice(int(hh_id[2:]), mp3)
     elif hh_id.startswith("sim-"):

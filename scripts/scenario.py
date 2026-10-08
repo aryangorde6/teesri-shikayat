@@ -11,6 +11,7 @@ Usage: AWS_PROFILE=hackathon .venv/bin/python scripts/scenario.py <command>
   approve [no]            the simulated volunteer taps हाँ, भेजें (or अभी नहीं)
   ward-reply [text]       the ward office replies (default "Resolved")
   answer <home> yes|no    a simulated home answers the check-in, e.g. answer C yes
+  quiet on|off            rehearsal mode: hold back messages to real phones (turn OFF before recording)
 """
 import json
 import os
@@ -26,7 +27,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "src"))
 def main() -> None:
     args = sys.argv[1:]
     if not args or args[0] not in {"reset", "seed", "building", "stand-in", "status", "volunteer", "approve",
-                                   "ward-reply", "answer"}:
+                                   "ward-reply", "answer", "quiet"}:
         sys.exit(__doc__)
     outputs = boto3.client("cloudformation", region_name=REGION).describe_stacks(StackName="Teesri")["Stacks"][0]["Outputs"]
     out = {o["OutputKey"]: o["OutputValue"] for o in outputs}
@@ -47,6 +48,7 @@ def main() -> None:
         "approve": lambda: scenario.approve("no" not in args[1:]),
         "ward-reply": lambda: scenario.ward_reply(" ".join(args[1:]) or "Resolved"),
         "answer": lambda: scenario.answer(args[1], args[2] == "yes"),
+        "quiet": lambda: scenario.set_quiet(args[1] == "on"),
     }[cmd]()
     print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
 

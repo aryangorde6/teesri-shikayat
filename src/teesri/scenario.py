@@ -55,7 +55,7 @@ def ring_centre() -> tuple[float, float]:
 def reset(mine: bool = False) -> dict:
     """Stops running cases, then removes simulated homes (their messages and reports), all incidents, the feed.
     Real homes stay enrolled. mine=True also removes real homes' reports, for a clean recording."""
-    prefixes = ("HH#sim-", "RPT#sim-", "DRAFT#sim-", "INC#", "ONCE#", "FEED", "TOK#", "CFG#") + (("RPT#tg", "DRAFT#tg") if mine else ())
+    prefixes = ("HH#sim-", "RPT#sim-", "DRAFT#sim-", "INC#", "ONCE#", "FEED", "TOK#", "CFG#volunteer") + (("RPT#tg", "DRAFT#tg") if mine else ())
     stopped = workflow.stop_all_cases()
     keys = [(i["PK"], i["SK"]) for p in prefixes for i in store.scan_prefix(p, keys_only=True)]
     with store.table().batch_writer() as b:
@@ -105,6 +105,12 @@ def set_volunteer(who: str) -> str:
                                consent_ts=store.now_iso(), is_simulated=True, label="Simulated volunteer")
     store.set_config("volunteer", hh_id=hh_id)
     return hh_id
+
+
+def set_quiet(on: bool) -> bool:
+    """Rehearsals: hold back messages to real phones (the Safety tab still shows every decision)."""
+    store.set_config("demo", quiet=on)
+    return on
 
 
 def current_incident() -> dict | None:
