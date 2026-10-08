@@ -92,10 +92,11 @@ class TeesriStack(Stack):
             actions=["transcribe:StartTranscriptionJob", "transcribe:GetTranscriptionJob", "polly:SynthesizeSpeech"],
             resources=["*"],
         ))
-        fn.add_to_role_policy(iam.PolicyStatement(
+        bedrock = iam.PolicyStatement(
             actions=["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
             resources=["arn:aws:bedrock:*:*:inference-profile/*", "arn:aws:bedrock:*::foundation-model/*"],
-        ))
+        )
+        fn.add_to_role_policy(bedrock)
 
         # The tripwire: every new report (RPT# insert) -> Pipe -> deterministic rule. Nothing else reaches it.
         tripwire = backend_fn("Tripwire", "teesri.tripwire.main", 5)
@@ -143,6 +144,7 @@ class TeesriStack(Stack):
         case_fn = backend_fn("Case", "teesri.case.main", 10)
         bucket.grant_read_write(case_fn)
         case_fn.add_to_role_policy(iam.PolicyStatement(actions=["polly:SynthesizeSpeech", "ses:SendEmail"], resources=["*"]))
+        case_fn.add_to_role_policy(bedrock)  # the Strands case agent (AGENT_MODE=agent)
 
         def step(name: str, step_id: str, result_path: str | None = None, wait: bool = False,
                  timeout_path: str | None = None, extra: dict | None = None) -> tasks.LambdaInvoke:
