@@ -1,0 +1,1 @@
+# Runtime dependencies bundled into the Lambda zip (boto3 is provided by the runtime).
