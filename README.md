@@ -18,7 +18,7 @@ BMC's SOP asks for immediate alerts to residents. Teesri Shikayat does that from
 ## How it works
 
 1. **Join in one tap.** Scan a QR code → Telegram bot → share your location → tap हाँ (consent). No app, no forms.
-2. **Complain the way people do: a Hindi voice note.** Amazon Transcribe (hi-IN) writes it down; Amazon Nova fills a fixed schema (colour, smell, since when, who is ill); code validates every field. If the model is unavailable, a plain-code keyword reader fills the same fields from the Hindi words (पीला, बदबू, दो दिन…) and the same checks apply; only if neither can read it does the resident answer three button questions. A failed read never counts as "clean".
+2. **Complain the way people do: a Hindi voice note.** Amazon Transcribe (hi-IN) writes it down; Amazon Nova fills a fixed schema (colour, smell, since when, who is ill); code validates every field. If the model is unavailable, a plain-code keyword reader fills the same fields from the Hindi words (पीला, बदबू, दो दिन…) and the same checks apply; only if neither can read it does the resident answer three button questions. A failed read never counts as "clean". Typed complaints count too, in Hindi or Roman-script Hinglish ("paani peela hai, badbu aa rahi hai").
 3. **The tripwire (code, no AI).** Every new report flows DynamoDB Streams → EventBridge Pipes → a rule: **3 different homes, every pair within 250 m, within 72 h.** If all three are within 30 m (one building, one tank), there's no area alarm; those flats get tank-cleaning advice instead. A report belongs to at most one incident (one DynamoDB transaction), so two simultaneous "third" reports make exactly one incident.
 4. **A case per incident (Step Functions).** The case agent briefs a local volunteer in Hindi; one tap approves. Then every enrolled home in the 250 m ring gets a Hindi warning (text + Amazon Polly voice): boil water, ORS, see a doctor, the nearest public hospital. The ward office gets a formal email **with no names or numbers**.
 5. **Closed at the tap, not on paper.** When the ward office says "resolved", that is a request to close the case, and Cedar denies it: only residents can close a case. Every home in the ring is asked "पानी साफ़ है?". Any "not clean" reopens the case at once; at least 3 "clean" and no "not clean" closes it; silence never closes it.
@@ -69,7 +69,7 @@ flowchart LR
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
-.venv/bin/python -m pytest -q                                           # 51 tests, no AWS account needed
+.venv/bin/python -m pytest -q                                           # 55 tests, no AWS account needed
 ./build.sh && AWS_PROFILE=<profile> cdk deploy                          # one stack: Teesri (ap-south-1)
 AWS_PROFILE=<profile> .venv/bin/python scripts/set_webhook.py           # point the Telegram bot at the stack
 AWS_PROFILE=<profile> .venv/bin/python scripts/scenario.py seed          # 22 simulated homes; then open <FunctionUrl>/console

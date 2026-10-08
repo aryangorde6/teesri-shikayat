@@ -116,6 +116,28 @@ def test_model_unavailable_keyword_reader_files_it_without_questions(env, monkey
     assert not any(e[2] in (texts.ASK_COLOUR, texts.FALLBACK_COLOUR) for e in env if len(e) > 2)
 
 
+def test_typed_complaint_counts_like_a_voice_note(env):
+    join()
+    post(msg(text="paani peela hai, badbu aa rahi hai, 2 din se"))
+    rpt = next(i for i in store.table().scan()["Items"] if i["PK"].startswith(f"RPT#{ME}-"))
+    assert (rpt["colour"], rpt["smell"], rpt["since_days"], rpt["source"]) == ("yellow", True, 2, "text")
+    assert env[-2][2] == texts.receipt({"colour": "yellow", "smell": True, "since_days": 2}) and env[-1][0] == "voice"
+
+
+def test_typed_dirty_without_details_asks_and_chatter_gets_the_hint(env):
+    join()
+    post(msg(text="पानी गंदा है"))
+    assert env[-1][2] == texts.ASK_COLOUR
+    draft_id = next(i["PK"][6:] for i in store.table().scan()["Items"] if i["PK"].startswith("DRAFT#"))
+    for data in (f"fb|{draft_id}|c|black", f"fb|{draft_id}|s|0", f"fb|{draft_id}|d|0"):
+        post(tap(data))
+    rpt = store.table().get_item(Key={"PK": f"RPT#{draft_id}", "SK": "META"})["Item"]
+    assert (rpt["colour"], rpt["source"], rpt["transcript"]) == ("black", "buttons", "पानी गंदा है")
+    for chatter in ("hello", "पानी गंदा नहीं है"):
+        post(msg(text=chatter))
+        assert env[-1][2] == texts.SEND_VOICE
+
+
 def test_voice_before_joining_gets_welcome(env, monkeypatch):
     monkeypatch.setattr(telegram, "download_file", lambda fid: pytest.fail("must not download"))
     post(msg(voice={"file_id": "f", "duration": 3}))

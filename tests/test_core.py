@@ -55,6 +55,23 @@ def test_keywords_never_guess():
     assert extract.keywords("बदबू है, बच्चे ठीक हैं")["vulnerable"] == []  # a child named without illness is not marked
 
 
+def test_keywords_read_typed_hinglish_and_english():
+    f = extract.keywords("paani peela hai aur badbu aa rahi hai, 2 din se")
+    assert (f["colour"], f["smell"], f["since_days"]) == ("yellow", True, 2)
+    f = extract.keywords("Brown water, no smell, since 3 days")
+    assert (f["colour"], f["smell"], f["since_days"]) == ("brown", False, 3)
+    f = extract.keywords("kala paani aa raha hai, bacche ko dast hai")
+    assert (f["colour"], f["illness"], f["vulnerable"]) == ("black", ["diarrhoea"], ["child"])
+    assert extract.keywords("hello") is None
+
+
+def test_sounds_like_complaint():
+    assert extract.sounds_like_complaint("पानी गंदा है")
+    assert extract.sounds_like_complaint("paani bahut ganda aa raha hai")
+    assert not extract.sounds_like_complaint("पानी गंदा नहीं है")
+    assert not extract.sounds_like_complaint("hello")
+
+
 def test_is_dirty():
     assert extract.is_dirty({"colour": "black"})
     assert extract.is_dirty({"colour": "clear", "smell": True})

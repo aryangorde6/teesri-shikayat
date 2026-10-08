@@ -74,10 +74,25 @@ def on_update(update: dict) -> None:
         return on_location(hh_id, msg["location"])
     if "voice" in msg:
         return on_voice(hh_id, msg)
-    if store.is_enrolled(store.get_household(hh_id)):
-        channel.send_text(hh_id, texts.SEND_VOICE)
-    else:
-        channel.send_text(hh_id, texts.WELCOME, location_keyboard=texts.SEND_LOCATION)
+    hh = store.get_household(hh_id)
+    if not store.is_enrolled(hh):
+        return channel.send_text(hh_id, texts.WELCOME, location_keyboard=texts.SEND_LOCATION)
+    if msg.get("text"):
+        return on_typed(hh, msg)
+    channel.send_text(hh_id, texts.SEND_VOICE)
+
+
+def on_typed(hh: dict, msg: dict) -> None:
+    """A typed complaint counts like a voice note: the keyword reader, then the buttons; anything else gets the hint."""
+    hh_id, text = hh["PK"].removeprefix("HH#"), msg["text"][:500]
+    rpt_id = f"{hh_id}-{msg['message_id']}"
+    fields = extract.keywords(text)
+    if fields:
+        return finalize(rpt_id, hh, fields, "text", text)
+    if extract.sounds_like_complaint(text):
+        store.put_draft(rpt_id, hh_id=hh_id, transcript=text, transcript_key="")
+        return ask_colour(hh_id, rpt_id, heard=True)
+    channel.send_text(hh_id, texts.SEND_VOICE)
 
 
 def on_start(hh_id: str, text: str) -> None:
