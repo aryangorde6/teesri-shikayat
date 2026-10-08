@@ -3,3 +3,4 @@ constructs>=10
 boto3
 cedarpy
 pytest
+moto[dynamodb]

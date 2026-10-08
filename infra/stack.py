@@ -4,6 +4,8 @@ from aws_cdk import (
     Duration,
     Stack,
     aws_dynamodb as ddb,
+    aws_events as events,
+    aws_events_targets as targets,
     aws_iam as iam,
     aws_lambda as lambda_,
     aws_s3 as s3,
@@ -54,6 +56,8 @@ class TeesriStack(Stack):
                 "BUCKET": bucket.bucket_name,
                 "TG_TOKEN_PARAM": TOKEN_PARAM,
                 "TG_SECRET_PARAM": SECRET_PARAM,
+                "BEDROCK_REGION": "ap-south-1",
+                "MODEL_ID": "global.amazon.nova-2-lite-v1:0",
             },
         )
         table.grant_read_write_data(fn)
@@ -62,6 +66,27 @@ class TeesriStack(Stack):
             actions=["ssm:GetParameter"],
             resources=[self.format_arn(service="ssm", resource="parameter", resource_name="teesri/*")],
         ))
+
+        fn.add_to_role_policy(iam.PolicyStatement(
+            actions=["transcribe:StartTranscriptionJob", "transcribe:GetTranscriptionJob", "polly:SynthesizeSpeech"],
+            resources=["*"],
+        ))
+        fn.add_to_role_policy(iam.PolicyStatement(
+            actions=["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
+            resources=["arn:aws:bedrock:*:*:inference-profile/*", "arn:aws:bedrock:*::foundation-model/*"],
+        ))
+
+        # Transcribe finished (or failed) -> same Lambda continues the voice note.
+        events.Rule(
+            self, "TranscribeDone",
+            event_pattern=events.EventPattern(
+                source=["aws.transcribe"],
+                detail_type=["Transcribe Job State Change"],
+                detail={"TranscriptionJobName": [{"prefix": "vn_"}],
+                        "TranscriptionJobStatus": ["COMPLETED", "FAILED"]},
+            ),
+            targets=[targets.LambdaFunction(fn, retry_attempts=2)],
+        )
 
         url = fn.add_function_url(auth_type=lambda_.FunctionUrlAuthType.NONE)
 
