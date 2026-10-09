@@ -70,7 +70,9 @@ class Text:
            ".co .on{background:#38bdf8;color:#0f1419;font-weight:700}"
            ".co.warn{border-left-color:#f59e0b} .co.warn h4{color:#f59e0b}"
            ".co.aws{border-left-color:#f59e0b;padding:12px 22px} .co.aws h4{color:#f59e0b;margin:0}"
-           ".co.ok{border-left-color:#22c55e} .co.ok h4{color:#22c55e} .co.ok .chip{border-color:#22c55e}")
+           ".co.ok{border-left-color:#22c55e} .co.ok h4{color:#22c55e} .co.ok .chip{border-color:#22c55e}"
+           ".spot{position:absolute;border:4px solid #f59e0b;border-radius:16px;"
+           "box-shadow:0 0 0 4000px rgba(10,14,18,.55),0 0 30px 6px rgba(245,158,11,.5)}")
 
     def __init__(self, tmp: pathlib.Path):
         self.tmp, self.n = tmp, 0
@@ -101,7 +103,11 @@ def segment(src: dict, dur: float, box, tmp: pathlib.Path, text: Text, beats: di
     out, wav = tmp / f"{tag}.mp4", None
     fit = f"scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color={BG},setsar=1,fps={FPS}"
     if "card" in src:
-        ff("-loop", 1, "-t", dur, "-i", ROOT / pick(src, "card"), "-vf", fit, *VENC, "-an", out)
+        # push: a slow zoom-in by that fraction over the part (worked at 2x so each step is half a pixel, no judder)
+        push = src.get("push", 0)
+        zoom = (f",scale={2 * w}:{2 * h},zoompan=z='1+{push}*on/{round(dur * FPS)}':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2'"
+                f":d=1:s={w}x{h}:fps={FPS}") if push else ""
+        ff("-loop", 1, "-framerate", FPS, "-t", dur, "-i", ROOT / pick(src, "card"), "-vf", fit + zoom, *VENC, "-an", out)
         return out, None
     if "beat" in src:
         name = next((k for k in beats if src["beat"].lower() in k.lower()), None)
@@ -173,8 +179,13 @@ def render_shot(shot: dict, tmp: pathlib.Path, text: Text, beats: dict, web: str
         if a:
             extra_audio.append((a, at))
     for j, snd in enumerate(shot.get("sounds", [])):  # a sound file laid over the shot, e.g. the voice note being recorded
+        if not (ROOT / snd["file"]).exists():  # footage/ is not committed: a fresh clone renders without the sound effects
+            print(f"  shot {n}: no {snd['file']}, sound skipped", flush=True)
+            continue
         wav = tmp / f"s{n:02d}snd{j}.wav"
-        ff("-i", ROOT / snd["file"], "-ac", 2, "-ar", 48000, "-af", "loudnorm=I=-20:TP=-2", wav)
+        # a sound effect sets its own gain in dB (too short for loudnorm); the voice note is levelled like the narration
+        af = f"volume={snd['db']}dB" if "db" in snd else "loudnorm=I=-20:TP=-2"
+        ff("-i", ROOT / snd["file"], "-ac", 2, "-ar", 48000, "-af", af, wav)
         extra_audio.append((wav, snd.get("at", 0)))
     # callouts: English on the frame (what the Hindi says, what the AI filed), html placed by its own CSS, faded in and out
     for j, c in enumerate(shot.get("callouts", [])):

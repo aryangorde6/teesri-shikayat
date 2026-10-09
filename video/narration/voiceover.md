@@ -48,18 +48,18 @@ Everyone in the ring hears this. Twenty of these homes never complained.
 
 The agent writes the ward office a formal complaint. Names and numbers never leave the lane. Cedar enforces that.
 
-## 1:50–2:12 · 11 closed at the tap
+## 1:50–2:09 · 11 closed at the tap
 
 Two days later, the ward office replies: resolved. The agent believes them and tries to close the case. Cedar says no. Only residents can close it. So it asks them. My tap says no. The case reopens.
 
-## 2:12–2:25 · 12 Indore replay
+## 2:09–2:18 · 12 Indore replay
 
 Replayed on Indore's dates, the third complaint would have raised the alarm about ten days before the first person fell ill.
 
-## 2:25–2:40 · 13 AWS
+## 2:18–2:33 · 13 AWS
 
 It all runs serverless on AWS. Step Functions holds each case for days, DynamoDB streams feed the tripwire, and Polly speaks Hindi. One incident costs about one rupee.
 
-## 2:40–2:51 · 14 close
+## 2:33–2:44 · 14 close
 
 Built for the monsoon that floods the street and dirties the tap. Teesri Shikayat: closed at the tap, not on paper.

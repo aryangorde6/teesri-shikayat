@@ -1,6 +1,6 @@
 # YouTube upload (Sun)
 
-Upload `video/out/teesri.mp4` as **Unlisted**, then open the link in a signed-out window before putting it in the form. Under "Altered or synthetic content" the narration is a synthetic voice but not a real person, so "No" is the honest answer; the description says it anyway.
+Upload `video/out/teesri.mp4` (2:44) as **Unlisted**, then open the link in a signed-out window before putting it in the form. **Thumbnail:** `video/thumbnail.png` (1280×720; YouTube Studio → Details → Thumbnail; custom thumbnails need a phone-verified account, otherwise pick one of YouTube's frames). Under "Altered or synthetic content" the narration is a synthetic voice but not a real person, so "No" is the honest answer; the description says it anyway.
 
 **Title** (under 100 characters):
 
@@ -24,6 +24,7 @@ Narration: a synthetic voice made with Chatterbox TTS (Resemble AI, MIT).
 Music: "Immersed" by Kevin MacLeod (incompetech.com). Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/
 Map data © OpenStreetMap contributors. Population: GHS-POP (European Commission JRC, CC BY 4.0).
 Opening clip (illustrative footage): "Tap, Water, Switch Off" by Kaffeesüchtig, Pixabay, https://pixabay.com/videos/tap-water-switch-off-close-136086/
+Sound effects: "Simple Whoosh", "Notification Sound Effect" and "Error Sound" by DRAGON-STUDIO, Pixabay (Pixabay Content License).
 
 Not affiliated with BMC or any water board.
 ```
