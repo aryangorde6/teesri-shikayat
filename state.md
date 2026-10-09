@@ -1,6 +1,6 @@
 # State: what's built so far
 
-Last updated: Fri 09 Oct 2026, 19:19 IST · Event: WeMakeDevs × AWS Environmental Hacks (Heat and Water), Oct 8–11
+Last updated: Fri 09 Oct 2026, 20:08 IST · Event: WeMakeDevs × AWS Environmental Hacks (Heat and Water), Oct 8–11
 
 **Teesri Shikayat** ("the third complaint"): residents send Hindi voice notes about dirty tap water on Telegram. When 3 homes within 250 m report it inside 72 h, everyone enrolled nearby is warned, and only residents can close the case.
 
@@ -92,11 +92,11 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
    - (a) ✅ Telegram Web linked (18:37).
    - (b) Optional now: the AWS support reply in `~/aws_environment/SEND-QUEUE.md` (the demo no longer needs Bedrock).
    - (c) Decide slot 2: "Thirty-six died." or the ALT "Dozens died." (the source says 36 deaths *examined*, 24 linked; Wikipedia 32).
-   - (d) ✅ Narration run and built (Fri 11:27). Listen to the voiced animatic once, especially "Teesri Shikayat" at 0:15 and 2:41; if the respelling sounds wrong, drop `--take 6=b --take 37=b` from the build-voice command in `video/recording-checklist.md`. **Voice stays Chatterbox** (Aryan, Fri 13:10): Polly Kajal and Kokoro male Indian voices were tried and rejected; their files are deleted.
+   - (d) ✅ Narration run and built (Fri 11:27). Listen to the voiced animatic once, especially "Teesri Shikayat" at 0:15 and 2:44 (was 2:41 before shot 6 grew 3 s); if the respelling sounds wrong, drop `--take 6=b --take 37=b` from the build-voice command in `video/recording-checklist.md`. **Voice stays Chatterbox** (Aryan, Fri 13:10): Polly Kajal and Kokoro male Indian voices were tried and rejected; their files are deleted.
    - (e) Put the AI-tools line in `docs/writeup.md` in your own words.
    - (f) Optional SES test inbox: verify an address in SES, then `aws ssm put-parameter --name /teesri/ward-inbox` and `/teesri/mail-from`.
-5. **Left for the video:** a stock clip for shot 1 (Pixabay, free licence; full 7 s if no tap clip of your own), then re-render and watch the whole cut once with sound (check the voice note under the narration in shot 6 and the warning in shot 9). Aryan's items: slot 2 line, AI-tools line, the name at 0:15 and 2:41.
-6. Fri: polish only what's on camera. **Sat 14:00 feature freeze**, then record and assemble (follow `video/recording-checklist.md`: Before → The run → After → Assemble). Sun: YouTube (unlisted, check signed out; title + description in `video/youtube.md`), paste `docs/writeup.md` into the form, submit hours before the deadline.
+5. ✅ **The video is cut** (Fri 19:19): `video/out/teesri.mp4`, 2:50.9, all real footage, no placeholders, -15 LUFS. Shot 1 = Pixabay tap clip (credited); shot 6 = the Hindi voice note alone between the two narration lines; garbled phone text fixed (see Done 18:20). Left: Aryan watches it once more with sound; Aryan's items 4(c), 4(d) (name at 0:15 and 2:44) and 4(e). Any change to the narration text means a new Colab run; any change to shot lengths means rebuilding `voice.wav` (`--length` = the last shot's end).
+6. **Sat 14:00 feature freeze** (fixes only after that). Recording and assembly are done (Fri). Sun: YouTube (unlisted, check signed out; title + description in `video/youtube.md`), paste `docs/writeup.md` into the form, submit hours before the deadline (plan: by Sun 16:00).
 
 ## Open issues
 
@@ -104,9 +104,10 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
 - **Model instance cost:** $0.43/h while running; it stops itself after an idle hour. Turn it on only for rehearsals/recording. It stopped itself after the 21:43 tour (seen `stopped` at 23:23); `scenario.py model off` stops it at once.
 - **Agent behaviour varies run to run:** sometimes Gemma puts the reporters' contacts into the ward email, so a `send_evidence_email` DENY → redraft appears on the Safety tab, and sometimes it doesn't. The slot 10 narration ("Names and numbers never leave the lane. Cedar enforces that.") is true either way. Check the Safety tab after the recording run before writing any caption about it.
 - **Deadline hour not official yet, but the overview page's "Ends in" countdown targets Sun 11 Oct 20:00 IST** (`<time datetime="2026-10-11T14:30:00Z">`, seen Thu 23:29; re-checked Fri 11:57: the countdown is no longer in the page source, the schedule page still says "the hours are being finalised", and no submission form is linked yet). Plan to submit by Sun 16:00 and re-check Sat. Rules page: a submission is a public repo, a YouTube video up to 3 minutes (public or unlisted), and a short writeup (problem, build, where AWS fits); the form closes hard. Form link and fields not published yet.
-- Telegram Desktop can't be driven from this machine (Wayland, no automation); phone steps go through Telegram Web in Chrome (linked 18:37). Recording still needs the real phone screen (shots 5, 6, 8, 9, 11).
-- The shot 9 caption ("20 of 23 … All 23") is fixed text in `video/edl.json`; check it against the console after the recording run.
+- Telegram Desktop can't be driven from this machine (Wayland, no automation); phone steps go through Telegram Web in Chrome (linked 18:37). The real-phone recording is done (Fri 14:48–15:25: join + two full runs).
+- The shot 9 caption ("20 of 23 … All 23") is fixed text in `video/edl.json`; it matches the recorded run 2 (23 homes warned, 3 of them reporters). Re-check only if the scenario changes.
 - **Narration clips are only on this machine:** `video/out/` is gitignored (`video/out/vo/`, `voice.wav`, `voice.srt`); backup zip `~/Downloads/vo-all.zip` (12.8 MB). The Colab runtime that made them is not needed any more (its tab may still be open in Chrome; "Leave" discards only scratch cells). Lost clips = rerun the notebook (~10 min) and redo the take swap in the checklist.
-- **Voice note through the air:** the laptop speaker → phone mic path loses the words (run 1: -34 dB, run 2: -29 dB but only "आ रहा है" heard). Clean take 2 transcribes exactly, so the fix is the acoustic path, not the take.
+- **Phone recordings have damaged keyframes** (scrcpy wrote truncated keyframes about every 30–40 s). Always decode them single-threaded (`ffmpeg -threads 1 -i …`), and check any new in-point frame by frame: run 2 is damaged at 70.6 s onward on the "भूरा" button and from 198.2 s on the purple voice-note bubble (shot 8 crops it out).
+- **Voice note through the air:** the laptop speaker → phone mic path loses the words (run 1: -34 dB, run 2: -29 dB but only "आ रहा है" heard). Clean take 2 transcribes exactly, so the fix is the acoustic path, not the take. **Worked around (Aryan, Fri 15:30):** no pickup; shot 6 lays the clean take 2 (`video/narration/voice-note-hi.flac`) over the phone footage, and the 2.5 s of button questions carry the label "If it can't make out the words, it asks with buttons".
 - **Colab tab still open** in Aryan's Chrome with my scratch cells (notebook opened from GitHub; the repo copy is unchanged). "Leave" discards only the scratch cells.
 - A brand-new Pipe starts reading the stream a minute or two after it says RUNNING (starting position LATEST). Not a problem once it has been running; for the demo it is deployed days ahead.
