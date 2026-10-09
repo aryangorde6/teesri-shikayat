@@ -59,7 +59,18 @@ class Text:
            "background:rgba(15,20,25,.88);padding:16px 30px;border-radius:14px;text-align:center;max-width:1600px}"
            ".ph{position:absolute;inset:0;border:4px dashed #f59e0b;display:flex;flex-direction:column;justify-content:center;"
            "align-items:center;text-align:center;padding:30px;background:#161d24}"
-           ".ph b{font-size:34px;color:#f59e0b} .ph span{font-size:26px;margin-top:14px;color:#cbd5e1}")
+           ".ph b{font-size:34px;color:#f59e0b} .ph span{font-size:26px;margin-top:14px;color:#cbd5e1}"
+           ".co{position:absolute;background:rgba(15,20,25,.94);border:1px solid #2a3540;border-left:6px solid #38bdf8;"
+           "border-radius:16px;padding:22px 28px;font-size:32px;line-height:1.35}"
+           ".co h4{font-size:20px;letter-spacing:.12em;text-transform:uppercase;color:#38bdf8;margin-bottom:10px}"
+           ".co .hi{font-size:25px;color:#8a99a8;margin-bottom:8px} .co .en{font-weight:600}"
+           ".co ul{padding-left:30px;margin-top:6px} .co li{margin:3px 0}"
+           ".co .chip{display:inline-block;border:2px solid #38bdf8;border-radius:999px;padding:4px 18px;margin:8px 8px 0 0}"
+           ".co .btn{display:inline-block;background:#2a3540;border-radius:10px;padding:4px 16px;margin:10px 8px 0 0;font-size:26px}"
+           ".co .on{background:#38bdf8;color:#0f1419;font-weight:700}"
+           ".co.warn{border-left-color:#f59e0b} .co.warn h4{color:#f59e0b}"
+           ".co.aws{border-left-color:#f59e0b;padding:12px 22px} .co.aws h4{color:#f59e0b;margin:0}"
+           ".co.ok{border-left-color:#22c55e} .co.ok h4{color:#22c55e} .co.ok .chip{border-color:#22c55e}")
 
     def __init__(self, tmp: pathlib.Path):
         self.tmp, self.n = tmp, 0
@@ -156,7 +167,7 @@ def render_shot(shot: dict, tmp: pathlib.Path, text: Text, beats: dict, web: str
         dur = o.get("dur", total - at)
         v, a = segment(o, dur, o["box"], tmp, text, beats, web, f"s{n:02d}o{j}")
         inputs += ["-i", v]
-        k = len(inputs) // 2 - 1
+        k = inputs.count("-i") - 1
         chain.append(f"[{k}:v]setpts=PTS+{at}/TB[o{j}];[{last}][o{j}]overlay={o['box'][0]}:{o['box'][1]}:eof_action=pass[v{j}]")
         last = f"v{j}"
         if a:
@@ -165,12 +176,21 @@ def render_shot(shot: dict, tmp: pathlib.Path, text: Text, beats: dict, web: str
         wav = tmp / f"s{n:02d}snd{j}.wav"
         ff("-i", ROOT / snd["file"], "-ac", 2, "-ar", 48000, "-af", "loudnorm=I=-20:TP=-2", wav)
         extra_audio.append((wav, snd.get("at", 0)))
+    # callouts: English on the frame (what the Hindi says, what the AI filed), html placed by its own CSS, faded in and out
+    for j, c in enumerate(shot.get("callouts", [])):
+        at = c.get("at", 0)
+        end = min(total, at + c.get("dur", total - at))
+        inputs += ["-loop", 1, "-t", total, "-i", text.png(pick(c, "html"))]
+        k = inputs.count("-i") - 1
+        chain.append(f"[{k}:v]format=rgba,fade=t=in:st={at}:d=0.3:alpha=1,fade=t=out:st={end - 0.3}:d=0.3:alpha=1[cf{j}];"
+                     f"[{last}][cf{j}]overlay=0:0:enable='between(t,{at},{end})'[c{j}]")
+        last = f"c{j}"
     span = shot.get("caption_span", [0, total])  # seconds into the shot the caption shows
     for key, html_, enable in (("label", '<div class="label">{}</div>', ""),
                                ("caption", '<div class="cap">{}</div>', f":enable='between(t,{span[0]},{span[1]})'")):
         if pick(shot, key):
             inputs += ["-i", text.png(html_.format(esc(pick(shot, key))))]
-            k = len(inputs) // 2 - 1
+            k = inputs.count("-i") - 1
             chain.append(f"[{last}][{k}:v]overlay=0:0{enable}[t{key}]")
             last = f"t{key}"
     out = tmp / f"s{n:02d}.mp4"
