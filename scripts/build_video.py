@@ -105,7 +105,9 @@ def segment(src: dict, dur: float, box, tmp: pathlib.Path, text: Text, beats: di
         ff("-loop", 1, "-t", dur, "-i", png, "-vf", f"fps={FPS},format=yuv420p", *VENC, "-an", out)
         return out, None
     start = max(0.0, float(start))
-    ff("-ss", start, "-i", path, "-t", dur, "-vf", f"{fit},tpad=stop_mode=clone:stop_duration={dur}", "-t", dur, *VENC, "-an", out)
+    crop = "crop={2}:{3}:{0}:{1},".format(*src["crop"]) if "crop" in src else ""  # [x, y, w, h] of the source frame
+    ff("-ss", start, "-i", path, "-t", dur, "-vf", f"{crop}{fit},tpad=stop_mode=clone:stop_duration={dur}", "-t", dur, *VENC,
+       "-an", out)
     if src.get("audio") and has_audio(path):
         wav = tmp / f"{tag}.wav"
         ff("-ss", start, "-i", path, "-t", dur, "-vn", "-ac", 2, "-ar", 48000, "-af", f"loudnorm=I=-20:TP=-2,apad=whole_dur={dur}",
@@ -159,6 +161,10 @@ def render_shot(shot: dict, tmp: pathlib.Path, text: Text, beats: dict, web: str
         last = f"v{j}"
         if a:
             extra_audio.append((a, at))
+    for j, snd in enumerate(shot.get("sounds", [])):  # a sound file laid over the shot, e.g. the voice note being recorded
+        wav = tmp / f"s{n:02d}snd{j}.wav"
+        ff("-i", ROOT / snd["file"], "-ac", 2, "-ar", 48000, "-af", "loudnorm=I=-20:TP=-2", wav)
+        extra_audio.append((wav, snd.get("at", 0)))
     span = shot.get("caption_span", [0, total])  # seconds into the shot the caption shows
     for key, html_, enable in (("label", '<div class="label">{}</div>', ""),
                                ("caption", '<div class="cap">{}</div>', f":enable='between(t,{span[0]},{span[1]})'")):
