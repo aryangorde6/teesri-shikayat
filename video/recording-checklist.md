@@ -36,3 +36,4 @@ Preview any time: `.venv/bin/python scripts/build_video.py --out video/out/anima
 3. **Footage:** put `phone.mp4` (scrcpy), `aws.mp4` (screencast), `stock-tap.mp4` and `cam-tap.mp4` into `video/footage/`. Add the stock clip's source and licence (Pexels/Pixabay page) to README → Credits. Set each `"in": null` in `video/edl.json` to the second where that moment starts in your recording. The console tour needs nothing: its in-points come from `beats.json`.
 4. **Check** that the shot 9 caption ("20 of 23 … All 23") matches what the console says in your run.
 5. **Render:** `.venv/bin/python scripts/build_video.py --voice video/out/voice.wav --subs video/out/voice.srt [--mode template] --out video/out/teesri.mp4`. It must print 2:4x (the limit is 3:00).
+6. **Upload:** title and description ready in `video/youtube.md` (Unlisted, music credit included; add the stock clip's credit).
