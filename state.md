@@ -91,11 +91,11 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
 4. **Needs Aryan:**
    - (a) ✅ Telegram Web linked (18:37).
    - (b) Optional now: the AWS support reply in `~/aws_environment/SEND-QUEUE.md` (the demo no longer needs Bedrock).
-   - (c) Decide slot 2: "Thirty-six died." or the ALT "Dozens died." (the source says 36 deaths *examined*, 24 linked; Wikipedia 32).
+   - (c) ✅ Slot 2 stays "Thirty-six died." (Aryan, Fri 20:56: the exact number matters; the card and README cite the commission's 36 deaths examined, 24 linked).
    - (d) ✅ Narration run and built (Fri 11:27). Listen to the voiced animatic once, especially "Teesri Shikayat" at 0:15 and 2:44 (was 2:41 before shot 6 grew 3 s); if the respelling sounds wrong, drop `--take 6=b --take 37=b` from the build-voice command in `video/recording-checklist.md`. **Voice stays Chatterbox** (Aryan, Fri 13:10): Polly Kajal and Kokoro male Indian voices were tried and rejected; their files are deleted.
    - (e) Put the AI-tools line in `docs/writeup.md` in your own words.
    - (f) Optional SES test inbox: verify an address in SES, then `aws ssm put-parameter --name /teesri/ward-inbox` and `/teesri/mail-from`.
-5. ✅ **The video is cut** (Fri 19:19): `video/out/teesri.mp4`, 2:50.9, all real footage, no placeholders, -15 LUFS. Shot 1 = Pixabay tap clip (credited); shot 6 = the Hindi voice note alone between the two narration lines; garbled phone text fixed (see Done 18:20). Left: Aryan watches it once more with sound; Aryan's items 4(c), 4(d) (name at 0:15 and 2:44) and 4(e). Any change to the narration text means a new Colab run; any change to shot lengths means rebuilding `voice.wav` (`--length` = the last shot's end).
+5. ✅ **The video is cut** (Fri 19:19): `video/out/teesri.mp4`, 2:50.9, all real footage, no placeholders, -15 LUFS. Shot 1 = Pixabay tap clip (credited); shot 6 = the Hindi voice note alone between the two narration lines; garbled phone text fixed (see Done 18:20). Left: Aryan watches it once more with sound; Aryan's items 4(d) (name at 0:15 and 2:44) and 4(e). Any change to the narration text means a new Colab run; any change to shot lengths means rebuilding `voice.wav` (`--length` = the last shot's end).
 6. **Sat 14:00 feature freeze** (fixes only after that). Recording and assembly are done (Fri). Sun: YouTube (unlisted, check signed out; title + description in `video/youtube.md`), paste `docs/writeup.md` into the form, submit hours before the deadline (plan: by Sun 16:00).
 
 ## Open issues
