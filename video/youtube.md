@@ -8,7 +8,7 @@ Upload `video/out/teesri.mp4` as **Unlisted**, then open the link in a signed-ou
 Teesri Shikayat: three dirty-water complaints, one warning | WeMakeDevs × AWS Environmental Hacks
 ```
 
-**Description** (fill the stock clip line once the clip is chosen; delete it if no stock clip is used):
+**Description**:
 
 ```
 Teesri Shikayat ("the third complaint") is a tripwire for dirty tap water. Residents send Hindi voice notes on Telegram. When three homes within 250 m report dirty water inside 72 hours, everyone enrolled around them is warned, and only the residents can close the case.
@@ -23,7 +23,7 @@ Credits
 Narration: a synthetic voice made with Chatterbox TTS (Resemble AI, MIT).
 Music: "Immersed" by Kevin MacLeod (incompetech.com). Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/
 Map data © OpenStreetMap contributors. Population: GHS-POP (European Commission JRC, CC BY 4.0).
-Stock footage: <title> by <creator> (<Pexels/Pixabay page URL>)
+Opening clip (illustrative footage): "Tap, Water, Switch Off" by Kaffeesüchtig, Pixabay, https://pixabay.com/videos/tap-water-switch-off-close-136086/
 
 Not affiliated with BMC or any water board.
 ```

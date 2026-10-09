@@ -4,8 +4,7 @@
  "beats": "video/web-tour/beats.json",
  "shots": [
   {"n": 1, "t": [0, 7], "caption": "Mumbai, every monsoon",
-   "parts": [{"file": "video/footage/stock-tap.mp4", "in": 0, "dur": 2, "audio": true, "label": "illustrative footage", "what": "STOCK: dirty tap water (licensed, Pexels/Pixabay)"},
-             {"file": "video/footage/cam-tap.mp4", "in": 0, "audio": true, "what": "CAM: my tap and hands"}]},
+   "parts": [{"file": "video/footage/stock-tap.mp4", "in": 0, "label": "illustrative footage", "what": "STOCK: \"Tap, Water, Switch Off\" by Kaffeesüchtig, Pixabay 136086 (1080p, 12.3 s; water runs until ~10 s; no audio). Full 7 s: there is no clip of my own tap"}]},
   {"n": 2, "t": [7, 15], "parts": [{"card": "video/cards/02-indore.png"}]},
   {"n": 3, "t": [15, 27],
    "parts": [{"card": "video/cards/03-title.png", "dur": 5},
