@@ -187,6 +187,18 @@ def render_shot(shot: dict, tmp: pathlib.Path, text: Text, beats: dict, web: str
     return out, audio
 
 
+def loudness(src: pathlib.Path, dst: pathlib.Path, target: float = -15.0) -> pathlib.Path:
+    """Two-pass loudnorm to `target` LUFS as one linear gain (no pumping). YouTube turns loud videos down but never
+    turns quiet ones up, and the raw mix measured -19.8 LUFS."""
+    out = subprocess.run(["ffmpeg", "-hide_banner", "-i", str(src), "-af", f"loudnorm=I={target}:TP=-1.5:LRA=20:print_format=json",
+                          "-f", "null", "-"], capture_output=True, text=True).stderr
+    m = json.loads(out[out.rindex("{"):out.rindex("}") + 1])
+    ff("-i", src, "-af", f"loudnorm=I={target}:TP=-1.5:LRA=20:linear=true:measured_I={m['input_i']}:measured_TP={m['input_tp']}:"
+       f"measured_LRA={m['input_lra']}:measured_thresh={m['input_thresh']}:offset={m['target_offset']},aresample=48000",
+       "-ac", 2, dst)
+    return dst
+
+
 def one_line_subs(src: pathlib.Path, dst: pathlib.Path, max_chars: int = 100) -> None:
     """Burned-in subtitles stay on one line: a longer cue becomes two cues, split at a comma in its middle third (else
     at the space nearest the middle), its time shared by length. A wrapped line would run into the labels above it."""
@@ -239,10 +251,10 @@ def main() -> None:
         ff("-f", "concat", "-safe", 0, "-i", tmp / "v.txt", "-c", "copy", tmp / "video.mp4")
         ff("-f", "concat", "-safe", 0, "-i", tmp / "a.txt", "-ac", 2, "-ar", 48000, tmp / "diegetic.wav")
         audio = tmp / "diegetic.wav"
-        if VOICE and not ONLY:
-            ff("-i", ROOT / VOICE, "-i", audio, "-filter_complex", "[0]aresample=48000,aformat=channel_layouts=stereo[v];"
+        if VOICE and not ONLY:  # mono narration copied to both channels at full level (a plain upmix costs it 3 dB)
+            ff("-i", ROOT / VOICE, "-i", audio, "-filter_complex", "[0]aresample=48000,pan=stereo|c0=c0|c1=c0[v];"
                "[v][1]amix=inputs=2:normalize=0:duration=longest", tmp / "mix.wav")
-            audio = tmp / "mix.wav"
+            audio = loudness(tmp / "mix.wav", tmp / "mix-norm.wav")
         video = tmp / "video.mp4"
         if SUBS and not ONLY:
             one_line_subs(ROOT / SUBS, tmp / "subs.srt")
