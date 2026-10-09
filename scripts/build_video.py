@@ -53,7 +53,7 @@ class Text:
     """Labels, captions and placeholders, drawn by Chromium so Hindi is shaped properly."""
     CSS = ("*{margin:0;box-sizing:border-box} body{width:%dpx;height:%dpx;background:transparent;position:relative;"
            "font-family:'Noto Sans','Noto Sans Devanagari',sans-serif;color:#e7edf2}"
-           ".label{position:absolute;left:40px;bottom:56px;font-size:26px;background:rgba(15,20,25,.85);border:1px solid #8a99a8;"
+           ".label{position:absolute;left:40px;bottom:126px;font-size:26px;background:rgba(15,20,25,.85);border:1px solid #8a99a8;"
            "border-radius:999px;padding:8px 20px}"
            ".cap{position:absolute;left:50%%;transform:translateX(-50%%);bottom:120px;font-size:44px;font-weight:700;"
            "background:rgba(15,20,25,.88);padding:16px 30px;border-radius:14px;text-align:center;max-width:1600px}"
@@ -181,6 +181,36 @@ def render_shot(shot: dict, tmp: pathlib.Path, text: Text, beats: dict, web: str
     return out, audio
 
 
+def one_line_subs(src: pathlib.Path, dst: pathlib.Path, max_chars: int = 100) -> None:
+    """Burned-in subtitles stay on one line: a longer cue becomes two cues, split at a comma in its middle third (else
+    at the space nearest the middle), its time shared by length. A wrapped line would run into the labels above it."""
+    def sec(s):
+        h, m, r = s.split(":")
+        return int(h) * 3600 + int(m) * 60 + float(r.replace(",", "."))
+
+    def stamp(x):
+        ms = round(x * 1000)
+        return f"{ms // 3600000:02d}:{ms // 60000 % 60:02d}:{ms // 1000 % 60:02d},{ms % 1000:03d}"
+
+    cues = []
+    for block in src.read_text(encoding="utf-8").strip().split("\n\n"):
+        lines = block.splitlines()
+        a, b = (sec(x.strip()) for x in lines[1].split("-->"))
+        txt = " ".join(lines[2:])
+        if len(txt) > max_chars:
+            n = len(txt)
+            cuts = [i for i, c in enumerate(txt) if c == "," and n / 3 < i < 2 * n / 3] or \
+                   [i for i, c in enumerate(txt) if c == " "]
+            i = min(cuts, key=lambda i: abs(i - len(txt) / 2))
+            head, tail = txt[:i + 1].strip(), txt[i + 1:].strip()
+            mid = a + (b - a) * len(head) / (len(head) + len(tail))
+            cues += [(a, mid, head), (mid, b, tail)]
+        else:
+            cues.append((a, b, txt))
+    dst.write_text("".join(f"{n}\n{stamp(a)} --> {stamp(b)}\n{t}\n\n" for n, (a, b, t) in enumerate(cues, 1)),
+                   encoding="utf-8")
+
+
 def main() -> None:
     edl = json.loads((ROOT / "video/edl.json").read_text())
     beats_path = ROOT / edl["beats"]
@@ -209,7 +239,7 @@ def main() -> None:
             audio = tmp / "mix.wav"
         video = tmp / "video.mp4"
         if SUBS and not ONLY:
-            shutil.copy(ROOT / SUBS, tmp / "subs.srt")
+            one_line_subs(ROOT / SUBS, tmp / "subs.srt")
             ff("-i", video, "-vf", f"subtitles={tmp / 'subs.srt'}:force_style='FontName=Noto Sans,FontSize=13,PrimaryColour=&H00FFFFFF,"
                "BackColour=&HB0000000,BorderStyle=3,Outline=3,Shadow=0,MarginV=14'", *VENC, "-an", tmp / "video-subs.mp4")
             video = tmp / "video-subs.mp4"
