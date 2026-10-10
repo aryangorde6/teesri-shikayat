@@ -91,9 +91,26 @@ class Text:
            "-webkit-text-stroke:3px rgba(22,19,17,.12);white-space:nowrap;line-height:1}"
            ".stage svg{position:absolute;inset:0;mix-blend-mode:multiply;opacity:.35}"
            ".body{position:absolute;background:#161311;border:4px solid #161311;box-shadow:16px 16px 0 #e3362a}"
-           ".body.window{box-shadow:12px 12px 0 #161311}")
+           ".body.window{box-shadow:14px 14px 0 #161311}"
+           # stage colours: newsprint (default), turmeric, blueprint
+           ".stage.yellow{background:#f5b400} .stage.yellow .half{background-image:radial-gradient(#161311 34%%,transparent 37%%)}"
+           ".stage.blue{background-color:#1d3fae;background-image:linear-gradient(rgba(255,255,255,.16) 2px,transparent 2px),"
+           "linear-gradient(90deg,rgba(255,255,255,.16) 2px,transparent 2px),linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),"
+           "linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);background-size:200px 200px,200px 200px,40px 40px,40px 40px}"
+           ".stage.blue .half{background-image:radial-gradient(#f5b400 34%%,transparent 37%%)} .stage.blue .ghost{-webkit-text-stroke-color:rgba(255,255,255,.12)}"
+           # on the framed console: a tag above it, tape on its corners, rubber stamps that slam on (fx slam in the edl)
+           ".tagx{position:absolute;left:310px;top:30px;font-family:'Courier 10 Pitch',monospace;font-weight:700;font-size:26px;"
+           "letter-spacing:.05em;text-transform:uppercase;background:#161311;color:#f2e8d0;padding:9px 20px;box-shadow:8px 8px 0 #e3362a;"
+           "transform:rotate(-1.5deg)}"
+           ".tape{position:absolute;width:190px;height:50px;background:rgba(255,249,228,.82);box-shadow:0 2px 6px rgba(0,0,0,.18)}"
+           ".stampx{position:absolute;transform:translate(-50%%,-50%%) rotate(var(--r,-8deg));color:#e3362a;border:11px double #e3362a;"
+           "padding:4px 30px 8px;font-stretch:75%%;font-weight:800;text-transform:uppercase;font-size:112px;line-height:1;white-space:nowrap;"
+           "background:rgba(255,252,243,.18);-webkit-mask-image:url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' "
+           "width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='3'/>"
+           "<feColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -14 0 0 0 9.4'/></filter>"
+           "<rect width='300' height='300' filter='url(%%23n)'/></svg>\");-webkit-mask-size:300px 300px}")
 
-    STAGE = ('<div class="stage"><div class="half" style="left:1150px;top:-380px;width:1100px;height:1100px;opacity:.5"></div>'
+    STAGE = ('<div class="stage {}"><div class="half" style="left:1150px;top:-380px;width:1100px;height:1100px;opacity:.5"></div>'
              '<div class="half" style="left:-300px;top:620px;width:800px;height:800px;opacity:.3"></div>'
              '<div class="ghost" style="font-size:560px;left:-40px;top:420px">शिकायत</div>'
              '<svg width="1920" height="1080"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3"/>'
@@ -193,13 +210,13 @@ def dims(path) -> tuple:
     return tuple(int(x) for x in out.split(",")[:2])
 
 
-def frame(v, box, kind: str, text: Text, stage: bool) -> tuple:
+def frame(v, box, kind: str, text: Text, stage: str) -> tuple:
     """Where the footage sits (x, y), the png under it (body + shadow, on the stage or on transparent) and its corner mask."""
     vw, vh = dims(v)
     x, y = box[0] + (box[2] - vw) // 2, box[1] + (box[3] - vh) // 2
     r, b = RADIUS[kind], BEZEL[kind]
     top = y - b if kind != "rise" else y - 240  # a rising phone's top is off the frame
-    under = text.png((Text.STAGE if stage else "") +
+    under = text.png((Text.STAGE.format(stage) if stage else "") +
                      f'<div class="body {kind}" style="left:{x - b}px;top:{top}px;width:{vw + 2 * b}px;height:{y + vh + b - top}px;'
                      f'border-radius:{r + b}px"></div>')
     corners = f"0 0 {r}px {r}px" if kind == "rise" else f"{r}px"
@@ -218,7 +235,7 @@ def render_shot(shot: dict, tmp: pathlib.Path, text: Text, beats: dict, web: str
         inner = inner_box(box, kind) if kind else box
         v, a = segment(p, dur, inner, tmp, text, beats, web, f"s{n:02d}p{i}", bare=bool(kind))
         if kind:  # the footage in its frame, on the stage
-            x, y, under, mask = frame(v, inner, kind, text, stage=True)
+            x, y, under, mask = frame(v, inner, kind, text, stage=p.get("stage", "paper"))
             placed = tmp / f"s{n:02d}p{i}full.mp4"
             ff("-loop", 1, "-framerate", FPS, "-t", dur, "-i", under, "-i", v, "-loop", 1, "-framerate", FPS, "-t", dur, "-i", mask,
                "-filter_complex", f"[2:v]alphaextract[m];[1:v]format=rgba[f];[f][m]alphamerge[o];[0:v][o]overlay={x}:{y}:shortest=1",
@@ -254,7 +271,7 @@ def render_shot(shot: dict, tmp: pathlib.Path, text: Text, beats: dict, web: str
         inner = inner_box(o["box"], kind) if kind else o["box"]
         v, a = segment(o, dur, inner, tmp, text, beats, web, f"s{n:02d}o{j}", bare=bool(kind))
         if kind:  # body and shadow under it, rounded corners on it
-            x, y, under, mask = frame(v, inner, kind, text, stage=False)
+            x, y, under, mask = frame(v, inner, kind, text, stage="")
             inputs += ["-loop", 1, "-framerate", FPS, "-t", total, "-i", under]
             ku = inputs.count("-i") - 1
             inputs += ["-i", v, "-loop", 1, "-framerate", FPS, "-t", dur, "-i", mask]
@@ -282,10 +299,17 @@ def render_shot(shot: dict, tmp: pathlib.Path, text: Text, beats: dict, web: str
     for j, c in enumerate(shot.get("callouts", [])):
         at = c.get("at", 0)
         end = min(total, at + c.get("dur", total - at))
-        inputs += ["-loop", 1, "-t", total, "-i", text.png(pick(c, "html"))]
+        inputs += ["-loop", 1, "-framerate", FPS, "-t", total, "-i", text.png(pick(c, "html"))]
         k = inputs.count("-i") - 1
-        chain.append(f"[{k}:v]format=rgba,fade=t=in:st={at}:d=0.4:alpha=1,fade=t=out:st={end - 0.3}:d=0.3:alpha=1[cf{j}];"
-                     f"[{last}][cf{j}]overlay=0:'18*pow(max(0,1-(t-{at})/0.5),3)':enable='between(t,{at},{end})'[c{j}]")
+        if c.get("fx") == "slam":  # a rubber stamp: lands from 2.2x onto its origin in 0.18 s
+            cx, cy = c["origin"]
+            z = f"if(lt(it,{at}),2.2,1+1.2*pow(max(0,1-(it-{at})/0.18),2))"
+            chain.append(f"[{k}:v]format=rgba,zoompan=z='{z}':x='{cx}-{cx}/zoom':y='{cy}-{cy}/zoom':d=1:s={W}x{H}:fps={FPS},"
+                         f"fade=t=in:st={at}:d=0.06:alpha=1,fade=t=out:st={end - 0.2}:d=0.2:alpha=1[cf{j}];"
+                         f"[{last}][cf{j}]overlay=0:0:enable='between(t,{at},{end})'[c{j}]")
+        else:
+            chain.append(f"[{k}:v]format=rgba,fade=t=in:st={at}:d=0.4:alpha=1,fade=t=out:st={end - 0.3}:d=0.3:alpha=1[cf{j}];"
+                         f"[{last}][cf{j}]overlay=0:'18*pow(max(0,1-(t-{at})/0.5),3)':enable='between(t,{at},{end})'[c{j}]")
         last = f"c{j}"
     span = shot.get("caption_span", [0, total])  # seconds into the shot the caption shows
     # label_at "right" keeps the shot's label off a phone on the left; caption_css moves the caption (e.g. off a PiP)
