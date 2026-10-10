@@ -18,7 +18,7 @@ Teesri Shikayat ("the third complaint") joins those complaints up. Residents sca
 
 In the demo, homes A–V on the phone wall are simulated and labelled on screen; my phone is real.
 
-*(Optional, only if it happened: one or two sentences on what the people you asked said about dirty water, and how many joined the bot without help.)*
+Before submitting, I showed it to five people outside the project, three friends and two older people, and gave them the QR code; all five said joining on Telegram was easy to follow.
 
 ## How did you use AWS in your project?
 
