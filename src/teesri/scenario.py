@@ -43,7 +43,16 @@ def real_homes() -> list[dict]:
 
 def anchor() -> tuple[float, float]:
     homes = real_homes()
-    return (float(homes[0]["lat"]), float(homes[0]["lon"])) if homes else DONGRI
+    if homes and store.get_config("anchor").get("at") != "dongri":
+        return float(homes[0]["lat"]), float(homes[0]["lon"])
+    return DONGRI
+
+
+def set_anchor(at: str) -> str:
+    """Runs without the phone: "dongri" puts the demo at the Dongri pin wherever the phone's home is ("phone" = default)."""
+    at = "dongri" if at == "dongri" else "phone"
+    store.set_config("anchor", at=at)
+    return at
 
 
 def ring_centre() -> tuple[float, float]:

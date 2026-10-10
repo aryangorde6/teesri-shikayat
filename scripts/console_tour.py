@@ -3,7 +3,8 @@ video plus a beat sheet (seconds into the video for each beat) for the editor.
 
 Demo actions go straight to /api/action with the console token read from SSM; the token is never typed into the page.
 Usage: AWS_PROFILE=hackathon .venv/bin/python scripts/console_tour.py [--third stand-in|phone] [--out video/web-tour]
-  --third stand-in (default): a simulated stand-in files the third report and answers "not clean"; real phones muted
+  --third stand-in (default): a simulated stand-in files the third report and answers "not clean"; real phones muted;
+                              the demo sits at the Dongri pin (your phone's home, if elsewhere, stays outside the ring)
   --third phone: waits for your phone's voice note, approval tap and "नहीं" (real recording run; quiet mode off)
 """
 import json
@@ -53,6 +54,7 @@ def wait_status(*wanted: str, timeout: int = 600) -> dict:
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     act("quiet", on=THIRD != "phone")
+    act("anchor", at="phone" if THIRD == "phone" else "dongri")  # stand-in runs sit at the Dongri pin, wherever the phone is
     act("reset")
     act("seed")
     act("volunteer", who="phone" if THIRD == "phone" else "sim")
@@ -136,6 +138,7 @@ def main() -> None:
     shutil.rmtree(OUT / "raw", ignore_errors=True)
     (OUT / "beats.json").write_text(json.dumps(beats, ensure_ascii=False, indent=1))
     act("quiet", on=False)
+    act("anchor", at="phone")
     print(f"saved {OUT / 'web-tour.webm'} and beats.json; quiet mode is off again")
 
 

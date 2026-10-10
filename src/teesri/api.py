@@ -118,6 +118,7 @@ ACTIONS = {
     "ward_reply": lambda a: scenario.ward_reply(a.get("text") or "Resolved"),
     "answer": lambda a: scenario.answer(str(a["home"]), bool(a["clean"])),
     "quiet": lambda a: scenario.set_quiet(bool(a.get("on"))),
+    "anchor": lambda a: scenario.set_anchor(str(a.get("at", "phone"))),
 }
 
 

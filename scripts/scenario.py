@@ -11,6 +11,7 @@ Usage: AWS_PROFILE=hackathon .venv/bin/python scripts/scenario.py <command>
   approve [no]            the simulated volunteer taps हाँ, भेजें (or अभी नहीं)
   ward-reply [text]       the ward office replies (default "Resolved")
   answer <home> yes|no    a simulated home answers the check-in, e.g. answer C yes
+  anchor dongri|phone     where the demo is: the Dongri pin, or your phone's home (default)
   quiet on|off            rehearsal mode: hold back messages to real phones (turn OFF before recording)
   model on|off|status     the self-hosted model instance ($0.43/h while on; it stops itself after an idle hour)
 """
@@ -29,7 +30,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent / "src"))
 def main() -> None:
     args = sys.argv[1:]
     if not args or args[0] not in {"reset", "seed", "building", "stand-in", "status", "volunteer", "approve",
-                                   "ward-reply", "answer", "quiet", "model"}:
+                                   "ward-reply", "answer", "quiet", "anchor", "model"}:
         sys.exit(__doc__)
     outputs = boto3.client("cloudformation", region_name=REGION).describe_stacks(StackName="Teesri")["Stacks"][0]["Outputs"]
     out = {o["OutputKey"]: o["OutputValue"] for o in outputs}
@@ -53,6 +54,7 @@ def main() -> None:
         "ward-reply": lambda: scenario.ward_reply(" ".join(args[1:]) or "Resolved"),
         "answer": lambda: scenario.answer(args[1], args[2] == "yes"),
         "quiet": lambda: scenario.set_quiet(args[1] == "on"),
+        "anchor": lambda: scenario.set_anchor(args[1] if len(args) > 1 else "phone"),
     }[cmd]()
     print(json.dumps(result, ensure_ascii=False, indent=2, default=str))
 
