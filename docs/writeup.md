@@ -42,7 +42,7 @@ Build it (open source): Strands Agents SDK, Cedar (cedarpy) and the AWS CDK (Pyt
 
 ## Team leader's contributions
 
-Solo, over four days from an empty folder, with one author on every commit. I chose the problem and the Dongri / B ward setting, made the product and design decisions, tested every flow on my own phone, recorded the footage and directed the video. AI tools used: Claude Code (Anthropic) as my AI coding agent; it wrote most of the code, the tests, the docs and the video-assembly scripts from those decisions. The narration is a synthetic voice (Chatterbox TTS). Inside the product, Gemma 4 on our EC2 instance reads the voice notes and drafts the case messages, and Cedar policies check every action. *(Aryan: edit so every "I" claim is exactly true, then delete this note.)*
+Solo, over four days, from an empty folder. This is my own problem: every monsoon, the tap water at home in Mumbai turns dirty. I chose it from 20 ideas I brainstormed and scored with Claude Code, and moved it from Delhi to Mumbai, where I live. I set the direction at each step (what to build, what to cut, how the video should look and sound), reviewed the results, and tested the bot on my own phone. AI tools used: Claude Code (Anthropic) as my AI coding agent. It wrote most of the code, the tests, the docs and this writeup, ran the screen recordings of my phone and the console, and assembled the video from my direction. The narration and the Hindi voice note played into the phone in the demo are a synthetic voice (Chatterbox TTS). Inside the product, Gemma 4 on our EC2 instance reads the voice notes and drafts the case messages.
 
 ## Help us evaluate you: your feedback on the AWS services you used
 
