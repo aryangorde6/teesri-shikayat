@@ -39,7 +39,9 @@ def state() -> dict:
             text = text.replace(real, a)
         return text
 
-    incs = sorted((i for i in items if i["PK"].startswith("INC#") and i["SK"] == "META"), key=lambda i: i["created_ts"])
+    # a reset while a case is still running can leave a stub META (a late status write, no created_ts): not an incident
+    incs = sorted((i for i in items if i["PK"].startswith("INC#") and i["SK"] == "META" and "created_ts" in i),
+                  key=lambda i: i["created_ts"])
     inc = incs[-1] if incs else None
     inc_pk = inc["PK"] if inc else None
     reported = {r["hh_id"] for r in items if r["PK"].startswith("RPT#") and r.get("colour") != "clear"}

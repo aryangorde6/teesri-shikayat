@@ -28,6 +28,11 @@ def test_public_state_leaves_out_real_homes_outside_the_ring(env):
     assert "19.1" not in json.dumps(s, default=str)
 
 
+def test_public_state_survives_a_stub_incident_left_by_a_reset(env):
+    store.table().put_item(Item={"PK": "INC#inc-stub", "SK": "META", "status": "PREPARED", "brief_mode": "template"})
+    assert api.state()["incident"] is None
+
+
 def test_demo_controls_need_the_token_and_only_answer_for_simulated_homes(env, monkeypatch):
     monkeypatch.setattr(api, "console_token", lambda: "t0ken")
     assert api.action({}, json.dumps({"action": "seed"}))[0] == 401
