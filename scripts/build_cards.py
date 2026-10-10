@@ -32,7 +32,7 @@ D = json.loads((ROOT / "video/slides-data.json").read_text())
 E = html.escape
 FPS = 30
 # the ring as the map shows it at the cut into shot 3 (web tour crop [14, 250, 1062, 597] scaled to 1920x1080)
-RING = {"cx": 958, "cy": 555, "r": 402, "dots": [(788, 582, 13), (1127, 582, 13), (1028, 540, 16)]}
+RING = {"cx": 958, "cy": 555, "r": 402, "dots": [(789, 585, 13), (1129, 585, 13), (960, 496, 13)]}
 TEX = {}  # grain and stamp-speckle textures, rendered once (data uris)
 
 CSS = """
