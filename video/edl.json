@@ -16,6 +16,7 @@
              {"file": "video/footage/phone-join-e.mp4", "in": 91.5, "dur": 3, "box": [280, 0, 600, 1080], "what": "PHONE: location (Dongri)"},
              {"file": "video/footage/phone-join-e.mp4", "in": 109, "box": [280, 0, 600, 1080], "what": "PHONE: हाँ → joined"}],
    "callouts": [
+    {"at": 0, "html": "<div class='tape' style='left:96px;top:236px;width:150px;height:44px;transform:rotate(-7deg);z-index:2'></div><div class='co' style='left:26px;top:262px;width:290px;padding:16px 18px 14px;transform:rotate(-3deg)'><h4>Scan to try it</h4>{qr:https://t.me/TeesriShikayatBot?start=B}<div style='font-family:\"Courier 10 Pitch\",monospace;font-weight:700;font-size:21px;margin-top:10px;text-align:center'>@TeesriShikayatBot</div></div>"},
     {"at": 0, "html": "<div class='co' style='left:940px;top:120px;width:860px'><h4>1 · Scan a code, tap Start</h4><div class='en'>“Welcome! We join up your area's dirty-water complaints and warn your neighbours in time.”</div></div>"},
     {"at": 3, "html": "<div class='co' style='left:940px;top:330px;width:860px'><h4>2 · Share your location</h4><div class='en'>Dongri, Mumbai</div></div>"},
     {"at": 6, "html": "<div class='co ok' style='left:940px;top:490px;width:860px'><h4>3 · Say yes</h4><div class='en'>“Your name and number are never shared. Tap हाँ (yes) to join.”</div><span class='chip'>You're in ✅</span></div>"}]},

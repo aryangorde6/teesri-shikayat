@@ -7,6 +7,7 @@ Usage: .venv/bin/python scripts/build_video.py [--mode agent|template] [--voice 
 """
 import json
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -123,6 +124,7 @@ class Text:
 
     def png(self, body: str, w: int = W, h: int = H) -> pathlib.Path:
         self.n += 1
+        body = re.sub(r"\{qr:([^}]+)\}", lambda m: qr_svg(m.group(1)), body)
         page = self.browser.new_page(viewport={"width": w, "height": h})
         page.set_content(f"<!doctype html><meta charset=utf-8><style>{self.CSS % (w, h)}</style><body>{body}</body>")
         path = self.tmp / f"text{self.n:03d}.png"
@@ -133,6 +135,18 @@ class Text:
     def close(self):
         self.browser.close()
         self.pw.stop()
+
+
+def qr_svg(url: str) -> str:
+    """{qr:URL} in a callout: the QR code as crisp vector squares (ink on the note's paper)."""
+    import qrcode
+    q = qrcode.QRCode(border=0, error_correction=qrcode.constants.ERROR_CORRECT_M)
+    q.add_data(url)
+    q.make(fit=True)
+    m = q.get_matrix()
+    d = "".join(f"M{x} {y}h1v1h-1z" for y, row in enumerate(m) for x, v in enumerate(row) if v)
+    return (f'<svg viewBox="-2 -2 {len(m) + 4} {len(m) + 4}" width="100%" shape-rendering="crispEdges" '
+            f'style="display:block;background:#fffcf3"><path d="{d}" fill="#161311"/></svg>')
 
 
 def esc(s: str) -> str:

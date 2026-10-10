@@ -16,7 +16,7 @@ Every monsoon in Mumbai, the water from my tap turns dirty, and I never know whe
 4. **One case per incident.** A Step Functions case briefs a local volunteer in Hindi, and one tap approves the warning. Every enrolled home in the 250 m ring then gets a Hindi warning as text plus an Amazon Polly voice note: boil water, ORS, see a doctor, and the nearest public hospital. The ward office gets a formal email with no names or numbers.
 5. **Closed at the tap, not on paper.** When the ward office says "resolved", that only counts as a request to close, and Cedar denies it. The residents are asked instead. Any "not clean" reopens the case. At least 3 "clean" answers and no "not clean" closes it, and silence never does.
 
-**The model decides language; code decides actions.** The tripwire, the ring, the recipients, the timers and the closure rule are plain, tested code (64 tests). Cedar checks every side effect and every agent tool call, and fails closed. Every decision appears on the console's Safety tab. A human approves every broadcast.
+**The model decides language; code decides actions.** The tripwire, the ring, the recipients, the timers and the closure rule are plain, tested code (65 tests). Cedar checks every side effect and every agent tool call, and fails closed. Every decision appears on the console's Safety tab. A human approves every broadcast.
 
 The demo uses 22 simulated homes on a phone wall, labelled on screen, plus my real phone. Simulated homes go through the same code path as a real phone, via a channel adapter.
 
@@ -40,6 +40,7 @@ The demo uses 22 simulated homes on a phone wall, labelled on screen, plus my re
 
 - Repo: https://github.com/aryangorde6/teesri-shikayat
 - Live console: https://eirioqqhvtvve3aw5xhpje2wju0jztrl.lambda-url.ap-south-1.on.aws/console
+- Try the bot (Telegram, in Hindi): https://t.me/TeesriShikayatBot?start=B. One report gets a receipt; an alarm needs three neighbours.
 - Video: _(YouTube link)_
 
 ## AI tools used
