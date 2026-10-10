@@ -37,7 +37,7 @@
    "sounds": [{"file": "video/footage/sfx-notify.mp3", "at": 12.3, "db": -12, "what": "SFX: Notification Sound Effect, DRAGON-STUDIO (Pixabay 372475): the warnings go out; its energy (first 0.7 s) ends before shot 9's line at 89.6"}],
    "callouts": [
     {"at": 0, "html": "<div class='co aws' style='left:860px;top:112px'><h4>AWS Step Functions · this case, live</h4></div>"},
-    {"at": 0.6, "html": "<div class='co' style='left:130px;top:0;width:707px;font-size:27px;padding:14px 22px;border-radius:0 0 16px 16px'><h4 style='margin-bottom:4px'>The volunteer's card, in Hindi</h4><div class='en'>“Dirty, smelly tap water, and a child has diarrhoea. 3 homes · 212 m · 71 h. Warn the whole area?”</div></div>"}]},
+    {"at": 0.6, "html": "<div class='co' style='left:130px;top:-6px;width:707px;font-size:27px;padding:18px 22px 14px;transform:none'><h4 style='margin-bottom:4px'>The volunteer's card, in Hindi</h4><div class='en'>“Dirty, smelly tap water, and a child has diarrhoea. 3 homes · 212 m · 71 h. Warn the whole area?”</div></div>"}]},
   {"n": 9, "t": [89, 101], "caption": "20 of 23 enrolled homes never complained. All 23 were warned.", "caption_css": "left:1222px;font-size:42px",
    "parts": [{"beat": "everyone in the ring warned", "offset": -1, "crop": [14, 250, 1062, 597], "push": 0.025, "what": "WEB (zoom on the map): every home in the ring turns orange (warned)"}],
    "overlays": [{"file": "video/footage/phone-run1.mp4", "in": 365.0, "at": 0, "audio": true, "box": [60, 60, 450, 960], "what": "PHONE: plays the Polly warning (audio starts at 370.3 s = 5.3 s in, after the narration)"}],
@@ -48,7 +48,7 @@
              {"beat": "Safety tab", "crop": [1090, 78, 830, 467], "push": 0.04, "what": "WEB (zoom): Safety tab, every action ALLOWed by Cedar"}]},
   {"n": 11, "t": [110, 129], "caption": "The ward office said resolved. The AI believed them. Cedar didn't.",
    "caption@template": "The ward office said resolved. Cedar asked the residents.",
-   "caption_span": [3, 15],
+   "caption_span": [3, 15], "caption_css": "bottom:200px",
    "parts": [{"beat": "+2 days", "offset": -0.5, "dur": 3, "label": "+2 days (demo clock)"},
              {"beat": "+2 days", "offset": 2.5, "dur": 5, "crop": [1090, 78, 830, 467], "push": 0.03, "label": "+2 days (demo clock)", "what": "WEB (zoom): close_case → DENY, only residents can close"},
              {"file": "video/footage/phone-run1.mp4", "in": 424.5, "dur": 7, "box": [280, 0, 600, 1080], "what": "PHONE: पानी साफ़ है? → tap नहीं"},

@@ -51,48 +51,53 @@ def duration(path) -> float:
 
 class Text:
     """Labels, captions and placeholders, drawn by Chromium so Hindi is shaped properly."""
-    # the same type and colour system as the motion cards (scripts/build_cards.py): Ubuntu Sans, amber for the signal
+    # the same maximalist system as the motion cards (scripts/build_cards.py): paper notes with hard shadows, stamp-red
+    # tabs, turmeric stickers, condensed caps, a typewriter face, Noto Serif Devanagari for Hindi
     CSS = ("*{margin:0;box-sizing:border-box} body{width:%dpx;height:%dpx;background:transparent;position:relative;"
-           "font-family:'Ubuntu Sans','Noto Sans','Noto Sans Devanagari',sans-serif;color:#f3efe7}"
-           ".label{position:absolute;left:44px;bottom:130px;font-family:'Ubuntu Sans Mono',monospace;font-size:21px;"
-           "letter-spacing:.14em;text-transform:uppercase;background:rgba(10,15,20,.82);border:1px solid rgba(255,255,255,.14);"
-           "border-radius:999px;padding:9px 22px 9px 18px;box-shadow:0 10px 30px rgba(0,0,0,.35)}"
+           "font-family:'Ubuntu Sans','Noto Sans','Noto Sans Devanagari',sans-serif;color:#161311}"
+           ".label{position:absolute;left:44px;bottom:132px;font-family:'Courier 10 Pitch',monospace;font-weight:700;font-size:23px;"
+           "letter-spacing:.05em;text-transform:uppercase;background:#f5b400;border:3px solid #161311;box-shadow:6px 6px 0 #161311;"
+           "padding:7px 18px;transform:rotate(-1.5deg)}"
            ".label.r{left:auto;right:44px}"
-           ".label::before{content:'';display:inline-block;width:10px;height:10px;border-radius:50%%;background:#ffb020;"
-           "margin-right:14px;vertical-align:2px}"
-           ".cap{position:absolute;left:50%%;transform:translateX(-50%%);bottom:128px;font-size:46px;font-weight:700;width:max-content;"
-           "background:rgba(10,15,20,.88);border:1px solid rgba(255,255,255,.12);padding:18px 36px;border-radius:18px;"
-           "text-align:center;max-width:1600px;box-shadow:0 24px 60px rgba(0,0,0,.45)}"
+           ".cap{position:absolute;left:50%%;transform:translateX(-50%%) rotate(-1deg);bottom:128px;width:max-content;max-width:1700px;"
+           "font-stretch:75%%;font-weight:800;text-transform:uppercase;font-size:56px;line-height:1;text-align:center;"
+           "background:#161311;color:#f2e8d0;padding:16px 32px 13px;box-shadow:10px 10px 0 #e3362a}"
            ".sub{position:absolute;left:50%%;transform:translateX(-50%%);bottom:40px;white-space:nowrap;font-size:40px;"
-           "font-weight:500;background:rgba(10,15,20,.76);padding:8px 26px 11px;border-radius:14px}"
-           ".ph{position:absolute;inset:0;border:4px dashed #ffb020;display:flex;flex-direction:column;justify-content:center;"
-           "align-items:center;text-align:center;padding:30px;background:#111922}"
-           ".ph b{font-size:34px;color:#ffb020} .ph span{font-size:26px;margin-top:14px;color:#c9d1d9}"
-           ".co{position:absolute;background:rgba(14,20,26,.94);border:1px solid rgba(255,255,255,.11);border-radius:22px;"
-           "padding:26px 32px;font-size:33px;line-height:1.38;box-shadow:0 26px 70px rgba(0,0,0,.5)}"
-           ".co h4{font-family:'Ubuntu Sans Mono',monospace;font-weight:500;font-size:19px;letter-spacing:.2em;"
-           "text-transform:uppercase;color:#ffb020;margin-bottom:14px}"
-           ".co h4::before{content:'';display:inline-block;width:10px;height:10px;border-radius:50%%;background:currentColor;"
-           "margin-right:14px;vertical-align:2px}"
-           ".co .hi{font-family:'Noto Serif Devanagari',serif;font-size:28px;color:#aab3bd;margin-bottom:10px;line-height:1.5}"
-           ".co .en{font-weight:500} .co ul{padding-left:28px;margin-top:8px} .co li{margin:4px 0}"
-           ".co .chip{display:inline-block;font-family:'Ubuntu Sans Mono',monospace;font-size:23px;border:1.5px solid rgba(255,255,255,.16);"
-           "background:rgba(255,255,255,.04);border-radius:999px;padding:6px 18px;margin:10px 10px 0 0}"
-           ".co .btn{display:inline-block;background:#1c2631;border:1px solid rgba(255,255,255,.08);border-radius:12px;"
-           "padding:6px 18px;margin:12px 10px 0 0;font-size:25px}"
-           ".co .on{background:#ffb020;color:#0a0f14;font-weight:700}"
-           ".co.warn{border-left:5px solid #ffb020}"
-           ".co.aws{padding:12px 22px;border-radius:999px} .co.aws h4{margin:0;font-size:18px}"
-           ".co.ok h4{color:#34d399} .co.ok .chip{border-color:rgba(52,211,153,.55)}"
-           ".spot{position:absolute;border:4px solid #ffb020;border-radius:16px;"
-           "box-shadow:0 0 0 4000px rgba(10,14,18,.55),0 0 30px 6px rgba(255,176,32,.5)}"
-           # the stage behind a framed phone: the cards' background, so a phone shot sits in the same world
-           ".stage{position:absolute;inset:0;background:radial-gradient(1300px 900px at 15%% 8%%,#18232e 0%%,rgba(10,15,20,0) 62%%),"
-           "radial-gradient(1000px 800px at 92%% 105%%,#131c25 0%%,rgba(10,15,20,0) 60%%),#0a0f14}"
-           ".stage::after{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.07) 1.3px,"
-           "transparent 1.6px);background-size:30px 30px}"
-           ".body{position:absolute;background:#161c23;border:1px solid rgba(255,255,255,.16);box-shadow:0 40px 90px rgba(0,0,0,.6),"
-           "inset 0 0 0 2px #0b0f13}")
+           "font-weight:500;color:#fffcf3;background:#161311;padding:8px 26px 11px 22px;border-left:10px solid #f5b400}"
+           ".ph{position:absolute;inset:0;border:4px dashed #e3362a;display:flex;flex-direction:column;justify-content:center;"
+           "align-items:center;text-align:center;padding:30px;background:#f2e8d0}"
+           ".ph b{font-size:34px;color:#e3362a} .ph span{font-size:26px;margin-top:14px}"
+           ".co{position:absolute;background:#fffcf3;border:4px solid #161311;box-shadow:12px 12px 0 #161311;padding:24px 30px 26px;"
+           "font-size:33px;line-height:1.36;transform:rotate(-.6deg)}"
+           ".co h4{display:inline-block;font-family:'Courier 10 Pitch',monospace;font-weight:700;font-size:21px;letter-spacing:.05em;"
+           "text-transform:uppercase;background:#e3362a;color:#fffcf3;padding:5px 12px;margin:-2px 0 14px;transform:rotate(-1deg)}"
+           ".co .hi{font-family:'Noto Serif Devanagari',serif;font-weight:700;font-size:28px;color:#5a5047;margin-bottom:10px;line-height:1.5}"
+           ".co .en{font-weight:600} .co ul{padding-left:28px;margin-top:8px} .co li{margin:4px 0}"
+           ".co .chip{display:inline-block;font-family:'Courier 10 Pitch',monospace;font-weight:700;font-size:23px;background:#f5b400;"
+           "border:3px solid #161311;box-shadow:4px 4px 0 #161311;padding:3px 14px;margin:12px 12px 0 0}"
+           ".co .btn{display:inline-block;background:#f2e8d0;border:3px solid #161311;border-radius:10px;box-shadow:4px 4px 0 #161311;"
+           "padding:4px 16px;margin:12px 12px 0 0;font-size:25px}"
+           ".co .on{background:#f5b400;font-weight:700}"
+           ".co.warn{background:#f5b400} .co.warn h4{background:#161311;color:#f5b400}"
+           ".co.aws{background:#161311;color:#f5b400;padding:10px 20px;box-shadow:8px 8px 0 #e3362a} .co.aws h4{background:none;color:#f5b400;"
+           "margin:0;padding:0;font-size:22px;transform:none}"
+           ".co.ok h4{background:#0d8a5c}"
+           ".spot{position:absolute;border:6px solid #e3362a;box-shadow:0 0 0 4000px rgba(22,19,17,.55),10px 10px 0 #161311}"
+           # the stage behind a framed phone: newsprint, a halftone blob and a huge outlined शिकायत, like the cards
+           ".stage{position:absolute;inset:0;background:#f2e8d0;overflow:hidden}"
+           ".stage .half{position:absolute;border-radius:50%%;background-image:radial-gradient(#e3362a 34%%,transparent 37%%);"
+           "background-size:18px 18px;-webkit-mask-image:radial-gradient(closest-side,#000 30%%,transparent 100%%)}"
+           ".stage .ghost{position:absolute;font-family:'Noto Serif Devanagari',serif;font-weight:700;color:transparent;"
+           "-webkit-text-stroke:3px rgba(22,19,17,.12);white-space:nowrap;line-height:1}"
+           ".stage svg{position:absolute;inset:0;mix-blend-mode:multiply;opacity:.35}"
+           ".body{position:absolute;background:#161311;border:4px solid #161311;box-shadow:16px 16px 0 #e3362a}"
+           ".body.window{box-shadow:12px 12px 0 #161311}")
+
+    STAGE = ('<div class="stage"><div class="half" style="left:1150px;top:-380px;width:1100px;height:1100px;opacity:.5"></div>'
+             '<div class="half" style="left:-300px;top:620px;width:800px;height:800px;opacity:.3"></div>'
+             '<div class="ghost" style="font-size:560px;left:-40px;top:420px">शिकायत</div>'
+             '<svg width="1920" height="1080"><filter id="g"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3"/>'
+             '<feColorMatrix type="saturate" values="0"/></filter><rect width="1920" height="1080" filter="url(#g)"/></svg></div>')
 
     def __init__(self, tmp: pathlib.Path):
         self.tmp, self.n = tmp, 0
@@ -163,7 +168,7 @@ def silence(dur: float, path: pathlib.Path) -> pathlib.Path:
     return path
 
 
-RADIUS, BEZEL, MARGIN = {"phone": 40, "rise": 40, "window": 14}, {"phone": 14, "rise": 14, "window": 1}, 46
+RADIUS, BEZEL, MARGIN = {"phone": 40, "rise": 40, "window": 6}, {"phone": 14, "rise": 14, "window": 4}, 46
 
 
 def frame_kind(src: dict, box) -> str:
@@ -194,8 +199,8 @@ def frame(v, box, kind: str, text: Text, stage: bool) -> tuple:
     x, y = box[0] + (box[2] - vw) // 2, box[1] + (box[3] - vh) // 2
     r, b = RADIUS[kind], BEZEL[kind]
     top = y - b if kind != "rise" else y - 240  # a rising phone's top is off the frame
-    under = text.png(('<div class="stage"></div>' if stage else "") +
-                     f'<div class="body" style="left:{x - b}px;top:{top}px;width:{vw + 2 * b}px;height:{y + vh + b - top}px;'
+    under = text.png((Text.STAGE if stage else "") +
+                     f'<div class="body {kind}" style="left:{x - b}px;top:{top}px;width:{vw + 2 * b}px;height:{y + vh + b - top}px;'
                      f'border-radius:{r + b}px"></div>')
     corners = f"0 0 {r}px {r}px" if kind == "rise" else f"{r}px"
     mask = text.png(f'<div style="position:absolute;inset:0;background:#fff;border-radius:{corners}"></div>', vw, vh)
