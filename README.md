@@ -41,6 +41,50 @@ flowchart LR
   POP["GHS-POP 2025<br/>Open Data on AWS"] -.-> TW
 ```
 
+## The case on AWS, state by state
+
+Every incident is one **Step Functions Standard** execution, named after the incident; each state is one Lambda call (`infra/stack.py`). Three states wait for people on a **task token**, so a case can wait days for a volunteer, the ward office or the residents, and costs nothing while it waits.
+
+![Step Functions graph of the recorded run: approved, warned, reopened, waiting for the ward office again](docs/img/stepfunctions-run.jpg)
+*One execution from the recorded demo run, in the Step Functions console: approved, every home warned, the ward office's "Resolved", a resident's "not clean" → **Reopened**, and the case back in **AwaitWardReply** (blue).*
+
+| State | What happens | Waits for |
+|---|---|---|
+| PrepareCase | The case agent writes the volunteer's Hindi brief (read-only tools until approval) | |
+| AskVolunteer | The volunteer's card: हाँ, भेजें / अभी नहीं | **task token**; no answer in 6 h → MarkUnapproved |
+| VolunteerApproved? | "अभी नहीं" → MarkHeld: nothing is sent, the case stays open | |
+| FindRingHomes | Every enrolled home within 250 m (a geohash index on the DynamoDB table) | |
+| WarnEveryHome | A **Map** state, 10 homes at a time: Hindi text plus one Polly voice note made once per incident; Cedar checks approval, consent and the template for each home | |
+| Warned → NotifyWardOffice | The SES email to the ward office: counts only, and Cedar checks the draft for names and numbers | |
+| AwaitWardReply | The ward office's reply | **task token**; 14 days → MarkNoWardReply |
+| HandleWardReply | "Resolved" is only a request: Cedar lets nobody but the quorum evaluator close a case (in agent mode the agent's `close_case` is denied on the Safety tab) | |
+| AskResidents | "पानी साफ़ है?" to every home in the ring | **task token**; a 24 h window |
+| EvaluateClosure → WhatResidentsSay | Any "not clean" → **Reopened** → back to AwaitWardReply. At least 3 "clean" and no "not clean" → **ClosedAtTap**. Otherwise **NextSupplyWindow** (a Wait state, 12 h) and ask again, up to 3 rounds → StillOpen | **Wait** |
+
+The timers are a real deployment's; the demo runs a faster clock (30 min, 7 days, 5 min and 60 s, in `src/teesri/workflow.py`). No execution can outlive 30 days.
+
+## AWS services
+
+| Service | Used for |
+|---|---|
+| **AWS Lambda** (3 functions, Python 3.13, arm64) + a Function URL | The bot's webhook, the console and its API; the tripwire; the case steps. Reserved concurrency as a cost guard |
+| **Amazon S3** | Voice notes, transcripts, Polly audio, the model weights |
+| **Amazon Transcribe** (hi-IN) | Hindi voice notes to text |
+| **Amazon EventBridge** (a rule) | Transcribe's job-state events for our `vn_` jobs wake the same Lambda to finish the report, so nothing polls |
+| **Amazon DynamoDB** (one on-demand table) | Homes, reports, incidents and the Safety log. Streams for new reports; a transaction so a report belongs to at most one incident; a geohash index for "homes within 250 m" |
+| **Amazon EventBridge Pipes** | The stream → the tripwire, filtered to new reports (`INSERT`, key `RPT#…`); a failed batch is bisected |
+| **AWS Step Functions** (Standard) | One execution per incident, above |
+| **Amazon Polly** (Kajal, Hindi) | Spoken warnings, receipts and the reopen notice |
+| **Amazon SES** | The ward office email (a test inbox in the demo) |
+| **Amazon EC2** (Graviton4) + **Amazon SQS** | Our own model (Gemma 4) with no inbound ports: requests arrive on an encrypted queue, answers come back as DynamoDB items, and its IAM role may write only `MODEL#heartbeat` and `MODELRESP#…` items (a `dynamodb:LeadingKeys` condition) |
+| **AWS Systems Manager** Parameter Store | The bot token, the webhook secret and the console token |
+| **Registry of Open Data on AWS** | GHS-POP population for every ring (`s3://jrc-ghsl`) |
+| **AWS CDK** (Python) | The whole stack, one `cdk deploy` (about a minute) |
+
+**Cost:** one real incident (23 homes warned, one reopen) cost **₹0.94 ($0.0107)**, measured from its own Step Functions history and Lambda logs and priced with the AWS Pricing API (`scripts/cost_per_incident.py`). The model instance is extra while it is on ($0.43/h), and it stops itself after an idle hour.
+
+**Proof:** 66 tests (moto, no AWS account needed) cover the tripwire, the ring, the closure rule, the Cedar policies and the public API; `scripts/preflight.py` runs 11 checks against the live stack.
+
 ## The model decides language; code decides actions
 
 - The tripwire, the ring, the recipients, the timers and the closure rule are plain code with tests.
