@@ -5,108 +5,155 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Teesri Shikayat Console</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&family=Noto+Sans+Devanagari:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu+Sans:wdth,wght@75..100,400..800&family=Courier+Prime:wght@400;700&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Serif+Devanagari:wght@400..700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
+/* Poster look, same palette as the video: ink, paper, red, turmeric, blue, pink.
+   Red = dirty / denied, turmeric = warned, blue = clean / allowed. The layout boxes match the old console,
+   so the video's crops and the title card's ring still line up. */
 :root {
-  --bg: #0f1419; --panel: #161d24; --panel2: #1d262f; --line: #2a3540; --text: #e7edf2; --muted: #8a99a8;
-  --red: #ef4444; --red-bg: rgba(239,68,68,.14); --amber: #f59e0b; --amber-bg: rgba(245,158,11,.16);
-  --green: #22c55e; --green-bg: rgba(34,197,94,.14); --blue: #38bdf8;
-  --font: "Noto Sans", "Noto Sans Devanagari", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --k: #161311; --p: #f2e8d0;
+  --bg: #f2e8d0; --sheet: #fbf4e1; --sheet2: #fffaf0; --ink: #161311; --muted: #6b6152; --dots: rgba(22,19,17,.13);
+  --red: #e3362a; --red-bg: #f9d3c8; --sun: #f5b400; --sun-bg: #fde9a6; --blue: #1d3fae; --blue-bg: #d4dcf5; --pink: #ff5d8f;
+  --font: "Ubuntu Sans", "Noto Sans Devanagari", system-ui, sans-serif;
+  --serif: "P052", "Palatino Linotype", Palatino, "Book Antiqua", "Noto Serif Devanagari", serif;
+  --mono: "Courier Prime", "Courier 10 Pitch", "Courier New", "Noto Sans Devanagari", monospace;
+  --hi: "Noto Serif Devanagari", "P052", serif;
 }
-:root[data-theme="light"] {
-  --bg: #f4f6f8; --panel: #ffffff; --panel2: #f0f3f6; --line: #dde3e9; --text: #111820; --muted: #5b6875;
+:root[data-theme="dark"] {
+  --bg: #161311; --sheet: #211c18; --sheet2: #2a241f; --ink: #f2e8d0; --muted: #b5a88f; --dots: rgba(242,232,208,.09);
+  --red-bg: #4a1d17; --sun-bg: #4a3a0c; --blue-bg: #1c2550;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); }
-body { display: flex; flex-direction: column; min-height: 100vh; }
-header { display: flex; align-items: center; gap: 14px; padding: 10px 18px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
-.brand { font-weight: 700; font-size: 19px; letter-spacing: .2px; }
-.brand small { display: block; font-weight: 400; font-size: 12.5px; color: var(--muted); }
-.chip { font: 600 12.5px var(--mono); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel2); white-space: nowrap; }
-.chip.red { color: var(--red); border-color: var(--red); background: var(--red-bg); }
-.chip.amber { color: var(--amber); border-color: var(--amber); background: var(--amber-bg); }
-.chip.green { color: var(--green); border-color: var(--green); background: var(--green-bg); }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--font); }
+body { display: flex; flex-direction: column; min-height: 100vh;
+  background-image: radial-gradient(var(--dots) 1px, transparent 1.5px); background-size: 12px 12px; }
+.x { font-stretch: 75%; font-weight: 800; text-transform: uppercase; }
+header { position: relative; display: flex; align-items: center; gap: 16px; height: 64px; padding: 0 18px 4px; background: var(--k); color: var(--p); flex-wrap: wrap; }
+header::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5px;
+  background: repeating-linear-gradient(90deg, var(--red) 0 140px, var(--sun) 140px 280px, var(--blue) 280px 420px, var(--pink) 420px 560px); }
+.brand { display: flex; flex-direction: column; }
+.brand b { font: 800 29px/1 var(--font); font-stretch: 75%; text-transform: uppercase; letter-spacing: .01em; }
+.brand b i { font: 700 19px/1 var(--hi); font-style: normal; color: var(--sun); margin-left: 10px; text-transform: none; letter-spacing: 0; }
+.brand small { font: italic 14px/1.1 var(--serif); color: rgba(242,232,208,.78); margin-top: 3px; }
+.chip { font: 700 13px/1 var(--mono); padding: 7px 10px 6px; border: 2px solid var(--p); color: var(--p); background: transparent; white-space: nowrap; }
+.chip.red { color: var(--p); border-color: var(--red); background: var(--red); }
+.chip.amber { color: var(--k); border-color: var(--sun); background: var(--sun); }
+.chip.green { color: var(--p); border-color: var(--blue); background: var(--blue); }
+#status { transform: rotate(-1.5deg); }
+#clock { transform: rotate(2deg); }
+#quiet { color: var(--k); border-color: var(--pink); background: var(--pink); transform: rotate(-2deg); }
 .spacer { flex: 1; }
-button { font: 600 13px var(--font); color: var(--text); background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
-button:hover { border-color: var(--blue); }
-button.primary { background: var(--blue); color: #001018; border-color: var(--blue); }
+button { font: 700 13px var(--font); font-stretch: 87.5%; text-transform: uppercase; letter-spacing: .05em; color: var(--k); background: var(--p);
+  border: 2px solid var(--k); border-radius: 0; padding: 7px 12px; cursor: pointer; box-shadow: 3px 3px 0 var(--k); }
+header button { border-color: var(--p); box-shadow: 3px 3px 0 var(--sun); }
+button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--k); }
+button.primary { background: var(--red); color: var(--p); }
 main { flex: 1; display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; padding: 12px; min-height: 0; }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+.card { background: var(--sheet); border: 3px solid var(--ink); overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+main > .card:first-child { box-shadow: 6px 6px 0 var(--red); }
+main > .card:last-child { box-shadow: 6px 6px 0 var(--blue); }
 #mapwrap { position: relative; flex: 1; min-height: 420px; }
-#map { position: absolute; inset: 0; }
-.overlay { position: absolute; z-index: 500; left: 12px; top: 12px; max-width: 360px; background: rgba(15,20,25,.92); color: #e7edf2; border: 1px solid var(--red); border-radius: 10px; padding: 12px 14px; display: none; }
-.overlay .big { font: 700 20px var(--mono); color: #fca5a5; }
-.overlay .sub { font-size: 13px; margin-top: 4px; color: #cbd5e1; }
-.legend { position: absolute; z-index: 500; right: 12px; bottom: 22px; background: rgba(15,20,25,.88); color: #e7edf2; border-radius: 8px; padding: 8px 10px; font-size: 12px; line-height: 1.7; }
-.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
-.toast { position: absolute; z-index: 600; left: 50%; bottom: 26px; transform: translateX(-50%); background: var(--green-bg); color: var(--green); border: 1px solid var(--green); padding: 10px 16px; border-radius: 10px; font-weight: 700; display: none; backdrop-filter: blur(4px); }
-.tabs { display: flex; border-bottom: 1px solid var(--line); }
-.tabs button { flex: 1; border: 0; border-radius: 0; background: transparent; padding: 11px 6px; color: var(--muted); border-bottom: 2px solid transparent; }
-.tabs button.on { color: var(--text); border-bottom-color: var(--blue); }
-.tabs .count { font: 600 11px var(--mono); margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--panel2); }
-.tabs .count.deny { background: var(--red); color: white; }
+#map { position: absolute; inset: 0; background: #e6dcc3; font-family: var(--font); }
+#map .leaflet-tile-pane { filter: grayscale(1) sepia(.35) contrast(1.12) brightness(1.02); }
+:root[data-theme="dark"] #map .leaflet-tile-pane { filter: grayscale(1) invert(.9) sepia(.4) contrast(.95); }
+.leaflet-bar { border: 2px solid var(--k) !important; border-radius: 0 !important; box-shadow: 3px 3px 0 var(--k) !important; }
+.leaflet-bar a { border-radius: 0 !important; color: var(--k) !important; background: var(--p) !important; border-color: var(--k) !important; font-weight: 800; }
+.leaflet-control-attribution { font: 10.5px var(--mono) !important; background: rgba(242,232,208,.88) !important; color: var(--k) !important; }
+.leaflet-tooltip { font: 800 13px var(--font); font-stretch: 87.5%; text-transform: uppercase; color: var(--k); background: var(--p); border: 2px solid var(--k); border-radius: 0; box-shadow: 3px 3px 0 var(--k); }
+.overlay { position: absolute; z-index: 500; left: 14px; top: 14px; max-width: 400px; background: var(--k); color: var(--p);
+  border: 3px solid var(--red); box-shadow: 6px 6px 0 var(--red); padding: 12px 16px 13px; display: none; transform: rotate(-1deg); }
+.overlay .big { font: 800 33px/1 var(--font); font-stretch: 75%; text-transform: uppercase; color: var(--sun); letter-spacing: .01em; }
+.overlay .sub { font: italic 15px/1.3 var(--serif); margin-top: 6px; color: var(--p); }
+.overlay #ringpop { font: 700 12.5px/1.35 var(--mono); color: #ffb3c6; }
+.legend { position: absolute; z-index: 500; right: 14px; bottom: 24px; background: var(--p); color: var(--k); border: 2px solid var(--k); box-shadow: 4px 4px 0 var(--k);
+  padding: 7px 12px; font: 800 12.5px/1.8 var(--font); font-stretch: 75%; text-transform: uppercase; letter-spacing: .05em; }
+.dot { display: inline-block; width: 13px; height: 13px; border-radius: 50%; margin-right: 8px; vertical-align: -2px; border: 2px solid var(--k); }
+.toast { position: absolute; z-index: 600; left: 50%; bottom: 26px; transform: translateX(-50%) rotate(-2deg); background: var(--sun); color: var(--k);
+  border: 3px solid var(--k); box-shadow: 5px 5px 0 var(--k); padding: 9px 18px 8px; font: 800 21px var(--font); font-stretch: 75%; text-transform: uppercase; letter-spacing: .02em; display: none; }
+.tabs { display: flex; height: 43px; flex: none; border-bottom: 3px solid var(--ink); }
+.tabs button { --tc: var(--k); --on: var(--p); flex: 1; height: 100%; border: 0; border-right: 2px solid var(--ink); border-radius: 0; background: var(--sheet); color: var(--ink);
+  box-shadow: inset 0 5px 0 var(--tc); padding: 5px 6px 0; font: 800 16px var(--font); font-stretch: 75%; letter-spacing: .06em; transform: none !important; }
+.tabs button:last-child { border-right: 0; }
+.tabs button.on { background: var(--tc); color: var(--on); box-shadow: none; }
+.tabs button[data-tab="wall"] { --tc: var(--sun); --on: var(--k); }
+.tabs button[data-tab="case"] { --tc: var(--pink); --on: var(--k); }
+.tabs button[data-tab="safety"] { --tc: var(--blue); }
+.tabs button[data-tab="inbox"] { --tc: var(--red); }
+.tabs button[data-tab="indore"] { --tc: var(--k); --on: var(--sun); }
+:root[data-theme="dark"] .tabs button[data-tab="indore"] { --tc: var(--p); --on: var(--k); }
+.tabs .count { display: inline-block; font: 700 12px/1 var(--mono); margin-left: 7px; padding: 3px 6px 2px; background: var(--k); color: var(--p); vertical-align: 1px; }
+.tabs .count.deny { background: var(--red); color: var(--p); outline: 2px solid var(--p); transform: rotate(-8deg); }
 .pane { display: none; overflow: auto; padding: 12px; flex: 1; min-height: 0; }
 .pane.on { display: block; }
-.walltitle { display: flex; justify-content: space-between; color: var(--muted); font-size: 12.5px; margin: 0 2px 8px; }
+.walltitle { display: flex; justify-content: space-between; gap: 12px; font: 800 13.5px var(--font); font-stretch: 75%; text-transform: uppercase; letter-spacing: .06em; margin: 0 2px 9px; }
+.walltitle span:last-child { font: italic 700 14.5px var(--serif); text-transform: none; letter-spacing: 0; color: var(--red); }
 .wall { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.phone { border: 1px solid var(--line); border-radius: 10px; padding: 7px 8px; background: var(--panel2); min-height: 92px; position: relative; transition: background .4s, border-color .4s; }
-.phone h4 { margin: 0 0 4px; font-size: 12px; display: flex; justify-content: space-between; color: var(--muted); font-weight: 600; }
+.phone { border: 2px solid var(--ink); padding: 7px 8px; background: var(--sheet2); min-height: 92px; position: relative; transition: background .4s, color .4s; }
+.phone h4 { margin: 0 0 4px; display: flex; justify-content: space-between; font: 800 13.5px var(--font); font-stretch: 75%; text-transform: uppercase; letter-spacing: .05em; }
 .phone .msg { font-size: 12.5px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.phone.reported { border-color: var(--red); background: var(--red-bg); }
-.phone.warned { border-color: var(--amber); background: var(--amber-bg); }
-.phone.pulse { animation: pulse 1.6s ease-out 2; }
-.phone.clean { border-color: var(--green); background: var(--green-bg); }
-.phone.real { border-style: dashed; }
-.phone .acts { display: flex; gap: 4px; margin-top: 5px; flex-wrap: wrap; }
-.phone .acts button { padding: 2px 6px; font-size: 11px; border-radius: 6px; }
-.voice { font: 600 11px var(--mono); color: var(--blue); cursor: pointer; }
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(245,158,11,.7); } 100% { box-shadow: 0 0 0 12px rgba(245,158,11,0); } }
-.steps { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.steps span { font-size: 12px; padding: 5px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
-.steps span.done { color: var(--text); border-color: var(--blue); }
-.steps span.now { color: #001018; background: var(--amber); border-color: var(--amber); font-weight: 700; }
-.steps span.bad { color: white; background: var(--red); border-color: var(--red); font-weight: 700; }
-.steps span.good { color: #001018; background: var(--green); border-color: var(--green); font-weight: 700; }
-.brief { background: var(--panel2); border-left: 3px solid var(--blue); padding: 10px 12px; border-radius: 6px; font-size: 15px; line-height: 1.5; margin-bottom: 10px; }
-.label { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin: 12px 0 6px; }
-.feed div { padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 13.5px; }
-.feed time { font: 12px var(--mono); color: var(--muted); margin-right: 8px; }
-.evt { display: grid; grid-template-columns: 64px 1fr auto; gap: 8px; align-items: center; padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 13px; }
-.evt time { font: 12px var(--mono); color: var(--muted); }
-.evt code { font: 600 13px var(--mono); }
-.evt .why { color: var(--muted); font-size: 12px; }
-.evt b { font: 700 12px var(--mono); padding: 3px 8px; border-radius: 6px; }
-.evt b.ALLOW { color: var(--green); background: var(--green-bg); }
-.evt b.DONE { color: var(--blue); background: rgba(56,189,248,.12); }
-.evt.DENY { background: var(--red-bg); border: 1px solid var(--red); border-radius: 8px; padding: 12px 10px; margin: 6px 0; }
-.evt.DENY code { font-size: 17px; }
-.evt.DENY .why { color: #fca5a5; font-size: 14px; font-weight: 600; }
-.evt.DENY b { color: white; background: var(--red); font-size: 15px; }
-.mail { background: var(--panel2); border-radius: 8px; padding: 12px; }
-.mail .subj { font-weight: 700; margin-bottom: 6px; }
-.mail pre { white-space: pre-wrap; font: 13px/1.5 var(--font); margin: 0; }
-.mail .meta { font: 12px var(--mono); color: var(--muted); margin-bottom: 8px; }
-.empty { color: var(--muted); font-size: 13.5px; padding: 18px 4px; }
-footer { padding: 6px 18px 10px; color: var(--muted); font-size: 11.5px; }
-dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 16px; width: min(560px, 92vw); }
-dialog::backdrop { background: rgba(0,0,0,.5); }
-dialog .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-dialog input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); font: 13px var(--mono); }
+.phone.reported { background: var(--red); color: var(--p); border-color: var(--k); }
+.phone.warned { background: var(--sun); color: var(--k); border-color: var(--k); }
+.phone.clean { background: var(--blue); color: var(--p); border-color: var(--k); }
+.phone.real { border: 3px dashed var(--pink); }
+.phone.pulse { animation: pop 1.6s ease-out 1; }
+.phone .acts { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+.phone .acts button { padding: 2px 6px; font-size: 11.5px; text-transform: none; letter-spacing: 0; box-shadow: 2px 2px 0 var(--k); }
+.voice { font: 700 11.5px var(--mono); color: inherit; text-decoration: underline; cursor: pointer; }
+@keyframes pop { 0% { transform: rotate(-2deg) scale(1.06); box-shadow: 6px 6px 0 var(--k); } 100% { transform: none; box-shadow: 0 0 0 transparent; } }
+.steps { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.steps span { font: 800 13.5px/1 var(--font); font-stretch: 75%; text-transform: uppercase; letter-spacing: .05em; padding: 7px 10px 6px; border: 2px solid var(--ink); color: var(--muted); background: var(--sheet2); }
+.steps span.done { color: var(--p); background: var(--k); border-color: var(--k); }
+.steps span.now { color: var(--k); background: var(--sun); border-color: var(--k); box-shadow: 3px 3px 0 var(--k); }
+.steps span.bad { color: var(--p); background: var(--red); border-color: var(--k); box-shadow: 3px 3px 0 var(--k); transform: rotate(-4deg) scale(1.12); }
+.steps span.good { color: var(--p); background: var(--blue); border-color: var(--k); box-shadow: 3px 3px 0 var(--k); }
+.brief { background: var(--sheet2); border: 3px solid var(--ink); box-shadow: 5px 5px 0 var(--sun); padding: 11px 14px; font: 17px/1.6 var(--hi); margin: 0 5px 12px 0; }
+.label { font: 700 12px var(--mono); color: var(--red); text-transform: uppercase; letter-spacing: .1em; margin: 14px 0 7px; }
+.feed div { padding: 6px 0; border-bottom: 2px dotted var(--ink); font-size: 14px; }
+.feed time { font: 700 12px var(--mono); color: var(--red); margin-right: 8px; }
+.evt { display: grid; grid-template-columns: 72px 1fr auto; gap: 8px; align-items: center; padding: 7px 6px; border-bottom: 2px dotted var(--ink); font-size: 13px; }
+.evt time { font: 700 12.5px var(--mono); color: var(--muted); }
+.evt code { font: 700 15px var(--mono); }
+.evt .why { color: var(--muted); font: italic 13px var(--serif); }
+.evt b { font: 700 13px/1 var(--mono); padding: 4px 8px 3px; border: 2.5px solid currentColor; letter-spacing: .06em; }
+.evt b.ALLOW { color: var(--blue); transform: rotate(-3deg); }
+:root[data-theme="dark"] .evt b.ALLOW { color: #8ea6ff; }
+.evt b.DONE { color: var(--ink); transform: rotate(2deg); }
+.evt.DENY { background: var(--red); color: var(--p); border: 3px solid var(--k); box-shadow: 5px 5px 0 var(--k); padding: 11px 12px; margin: 9px 5px 9px 0; transform: rotate(-.6deg); }
+.evt.DENY time { color: var(--p); }
+.evt.DENY code { font-size: 19px; }
+.evt.DENY .why { color: var(--p); font: italic 600 15px var(--serif); }
+.evt.DENY b { color: var(--red); background: var(--p); border-color: var(--k); font-size: 17px; box-shadow: 3px 3px 0 var(--k); transform: rotate(-5deg) scale(1.05); }
+.mail { background: var(--sheet2); border: 3px solid var(--ink); box-shadow: 6px 6px 0 var(--red); padding: 13px 18px 16px; margin: 0 6px 12px 0; }
+.mail .meta { font: 700 12.5px var(--mono); color: var(--red); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 2px dashed var(--ink); }
+.mail .subj { font: italic 700 23px/1.2 var(--serif); margin-bottom: 10px; }
+.mail pre { white-space: pre-wrap; font: 14.5px/1.5 var(--mono); margin: 0; }
+.empty { color: var(--muted); font: italic 15px var(--serif); padding: 18px 4px; }
+.ttl { font: italic 700 25px/1.15 var(--serif); }
+.pane .chip { border-color: var(--k); box-shadow: 3px 3px 0 var(--k); transform: rotate(-1deg); }
+.pane a { color: var(--blue); font-weight: 700; }
+footer { padding: 6px 18px 10px; color: var(--muted); font: 11.5px/15.5px var(--mono); }
+dialog { background: var(--sheet); color: var(--ink); border: 3px solid var(--ink); border-radius: 0; box-shadow: 8px 8px 0 var(--red); padding: 16px; width: min(560px, 92vw); }
+dialog::backdrop { background: rgba(22,19,17,.55); }
+dialog b { font: 800 22px var(--font); font-stretch: 75%; text-transform: uppercase; }
+dialog .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+dialog .grid button { text-transform: none; letter-spacing: 0; }
+dialog input { width: 100%; padding: 8px; border: 2px solid var(--ink); border-radius: 0; background: var(--sheet2); color: var(--ink); font: 13px var(--mono); }
 #out { font: 12px var(--mono); color: var(--muted); margin-top: 10px; white-space: pre-wrap; max-height: 120px; overflow: auto; }
 @media (max-width: 900px) {
-  html, body { height: auto; } main { display: block; flex: none; padding: 10px 16px; } header { padding: 10px 16px; }
-  .card { margin-bottom: 12px; } #mapwrap { height: 340px; min-height: 340px; flex: none; }
+  html, body { height: auto; } main { display: block; flex: none; padding: 10px 16px; } header { height: auto; min-height: 64px; padding: 8px 16px 12px; }
+  .card { margin-bottom: 14px; } #mapwrap { height: 340px; min-height: 340px; flex: none; }
   main > .card:last-child { height: 75vh; }
   .wall { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tabs button { font-size: 13px; letter-spacing: .02em; }
   .chip { white-space: normal; } .legend { display: none; } .overlay { max-width: calc(100% - 70px); }
 }
 </style>
 </head>
 <body>
 <header>
-  <div class="brand">Teesri Shikayat <small>a tripwire for dirty tap water · Dongri, B ward, Mumbai</small></div>
+  <div class="brand"><b>Teesri Shikayat<i>तीसरी शिकायत</i></b><small>a tripwire for dirty tap water · Dongri, B ward, Mumbai</small></div>
   <span id="status" class="chip">no incident</span>
   <span id="clock" class="chip amber" style="display:none">+2 days (demo clock)</span>
   <span id="quiet" class="chip red" style="display:none">rehearsal: real phones muted</span>
@@ -120,10 +167,10 @@ dialog input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid 
       <div id="map"></div>
       <div id="ringcard" class="overlay"><div class="big" id="ringbig"></div><div class="sub" id="ringsub"></div><div class="sub" id="ringpop"></div></div>
       <div class="legend">
-        <div><span class="dot" style="background:#94a3b8"></span>enrolled home</div>
-        <div><span class="dot" style="background:#ef4444"></span>reported dirty water</div>
-        <div><span class="dot" style="background:#f59e0b"></span>warned</div>
-        <div><span class="dot" style="background:#22c55e"></span>says the tap is clean</div>
+        <div><span class="dot" style="background:#f2e8d0"></span>enrolled home</div>
+        <div><span class="dot" style="background:#e3362a"></span>reported dirty water</div>
+        <div><span class="dot" style="background:#f5b400"></span>warned</div>
+        <div><span class="dot" style="background:#1d3fae"></span>says the tap is clean</div>
       </div>
       <div id="toast" class="toast"></div>
     </div>
@@ -142,27 +189,27 @@ dialog input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid 
     <div id="inbox" class="pane"></div>
     <div id="indore" class="pane">
       <div class="chip amber" style="display:inline-block;margin-bottom:10px">RECONSTRUCTION · counterfactual, not what happened</div>
-      <div style="font-size:17px;font-weight:700">Indore, Bhagirathpura · December 2025</div>
-      <div style="color:var(--muted);font-size:13px;margin:4px 0 12px">If the first three close-by complaints had been grouped, when would the alarm have gone off?</div>
-      <svg viewBox="0 0 640 210" width="100%" role="img" aria-label="Timeline: tripwire alarm around 17 December, first illness 27 December">
-        <line x1="20" y1="120" x2="620" y2="120" stroke="var(--line)" stroke-width="3"/>
-        <g font-family="JetBrains Mono, monospace" font-size="11" fill="var(--muted)" text-anchor="middle">
-          <text x="20" y="142">Dec 12</text><text x="140" y="142">15</text><text x="260" y="142">18</text><text x="380" y="142">21</text>
-          <text x="500" y="142">24</text><text x="620" y="142">27</text>
+      <div class="ttl">Indore, Bhagirathpura · December 2025</div>
+      <div style="color:var(--muted);font-size:14px;margin:6px 0 12px">If the first three close-by complaints had been grouped, when would the alarm have gone off?</div>
+      <svg viewBox="0 0 640 210" width="100%" role="img" aria-label="Timeline: tripwire alarm around 17 December, first illness 27 December" style="font-family:var(--font);font-stretch:87.5%">
+        <line x1="20" y1="120" x2="620" y2="120" stroke="var(--ink)" stroke-width="4"/>
+        <g font-family="Courier Prime, Courier 10 Pitch, monospace" font-size="11.5" font-weight="700" fill="var(--muted)" text-anchor="middle">
+          <text x="20" y="144">Dec 12</text><text x="140" y="144">15</text><text x="260" y="144">18</text><text x="380" y="144">21</text>
+          <text x="500" y="144">24</text><text x="620" y="144">27</text>
         </g>
-        <rect x="140" y="108" width="80" height="24" rx="4" fill="var(--amber-bg)" stroke="var(--amber)"/>
-        <text x="180" y="100" text-anchor="middle" font-size="11.5" fill="var(--amber)">3 complaints (assumed)</text>
-        <circle cx="220" cy="120" r="9" fill="#ef4444"/>
-        <text x="220" y="70" text-anchor="middle" font-size="13" font-weight="700" fill="#ef4444">tripwire alarm</text>
-        <text x="220" y="86" text-anchor="middle" font-size="11.5" fill="var(--muted)">≈ Dec 17</text>
+        <rect x="140" y="107" width="80" height="26" fill="var(--sun)" stroke="var(--ink)" stroke-width="2"/>
+        <text x="180" y="99" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink)">3 COMPLAINTS (ASSUMED)</text>
+        <circle cx="220" cy="120" r="10" fill="var(--red)" stroke="var(--ink)" stroke-width="2"/>
+        <text x="220" y="68" text-anchor="middle" font-size="16" font-weight="800" fill="var(--red)">TRIPWIRE ALARM</text>
+        <text x="220" y="84" text-anchor="middle" font-size="12" font-style="italic" font-family="P052, Palatino Linotype, Palatino, serif" fill="var(--ink)">≈ Dec 17</text>
         <circle cx="540" cy="120" r="6" fill="var(--muted)"/>
-        <text x="540" y="168" text-anchor="middle" font-size="11.5" fill="var(--muted)">Dec 25 bitter taste</text>
-        <circle cx="620" cy="120" r="9" fill="var(--text)"/>
-        <text x="612" y="70" text-anchor="end" font-size="13" font-weight="700" fill="var(--text)">first illness</text>
-        <text x="612" y="86" text-anchor="end" font-size="11.5" fill="var(--muted)">Dec 27 (deaths from Dec 29)</text>
-        <path d="M220 190 L620 190" stroke="var(--green)" stroke-width="2" marker-start="url(#a)" marker-end="url(#a)"/>
-        <defs><marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="var(--green)"/></marker></defs>
-        <text x="420" y="184" text-anchor="middle" font-size="13" font-weight="700" fill="var(--green)">≈ 10 days of warning</text>
+        <text x="540" y="170" text-anchor="middle" font-size="12" fill="var(--muted)">Dec 25 bitter taste</text>
+        <circle cx="620" cy="120" r="10" fill="var(--ink)"/>
+        <text x="612" y="68" text-anchor="end" font-size="16" font-weight="800" fill="var(--ink)">FIRST ILLNESS</text>
+        <text x="612" y="84" text-anchor="end" font-size="12" font-style="italic" font-family="P052, Palatino Linotype, Palatino, serif" fill="var(--ink)">Dec 27 (deaths from Dec 29)</text>
+        <path d="M220 192 L620 192" stroke="var(--blue)" stroke-width="3" marker-start="url(#a)" marker-end="url(#a)"/>
+        <defs><marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="var(--blue)"/></marker></defs>
+        <text x="420" y="185" text-anchor="middle" font-size="16" font-weight="800" fill="var(--blue)">≈ 10 DAYS OF WARNING</text>
       </svg>
       <div class="label">What happened (sources)</div>
       <div class="feed">
@@ -173,9 +220,9 @@ dialog input { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid 
         <div>A judicial commission examined 36 deaths and linked 24 directly to sewage in municipal pipelines (as reported by ETV Bharat, Sep 2026; the report is not public). Wikipedia lists 32 deaths.</div>
       </div>
       <div class="label">Reconstruction assumptions</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.5">Individual complaint dates are not public. The replay assumes three homes on one lane complained on Dec 15, 16 and 17 ("mid-December"), within 250 m and 72 h, so the tripwire would fire on Dec 17.
-      Sources: <a style="color:var(--blue)" href="https://en.wikipedia.org/wiki/2025_Indore_drinking_water_contamination" target="_blank" rel="noopener">Wikipedia</a> ·
-      <a style="color:var(--blue)" href="https://www.etvbharat.com/en/bharat/600-page-report-unravels-bhagirathpura-deaths-in-indore-enn26090102772" target="_blank" rel="noopener">ETV Bharat</a></div>
+      <div style="font-size:13.5px;color:var(--muted);line-height:1.5">Individual complaint dates are not public. The replay assumes three homes on one lane complained on Dec 15, 16 and 17 ("mid-December"), within 250 m and 72 h, so the tripwire would fire on Dec 17.
+      Sources: <a href="https://en.wikipedia.org/wiki/2025_Indore_drinking_water_contamination" target="_blank" rel="noopener">Wikipedia</a> ·
+      <a href="https://www.etvbharat.com/en/bharat/600-page-report-unravels-bhagirathpura-deaths-in-indore-enn26090102772" target="_blank" rel="noopener">ETV Bharat</a></div>
     </div>
   </section>
 </main>
@@ -205,7 +252,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } },
                 set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 const theme = store.get("theme"); if (theme) document.documentElement.dataset.theme = theme;
-$("#theme").onclick = () => { const t = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+$("#theme").onclick = () => { const t = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
   document.documentElement.dataset.theme = t; store.set("theme", t); };
 
 // --- map --------------------------------------------------------------------------------------
@@ -214,25 +261,25 @@ L.control.zoom({ position: "topright" }).addTo(map);
 L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors" }).addTo(map);
 const markers = {}; let ring = null, ringId = null;
 function colour(h) {
-  if (h.checkin === true) return "#22c55e";
-  if (h.reported && (h.member || !h.warned)) return "#ef4444";
-  if (h.warned) return "#f59e0b";
-  return "#94a3b8";
+  if (h.checkin === true) return "#1d3fae";
+  if (h.reported && (h.member || !h.warned)) return "#e3362a";
+  if (h.warned) return "#f5b400";
+  return "#f2e8d0";
 }
 function drawMap(s) {
   const seen = new Set();
   for (const h of s.homes) {
     seen.add(h.id);
     const c = colour(h), r = h.sim ? 7 : 10;
-    if (!markers[h.id]) markers[h.id] = L.circleMarker([h.lat, h.lon], { radius: r, weight: h.sim ? 1.5 : 3, color: "#0f1419", fillOpacity: .95 })
+    if (!markers[h.id]) markers[h.id] = L.circleMarker([h.lat, h.lon], { radius: r, weight: h.sim ? 2 : 4, color: "#161311", fillOpacity: 1 })
       .addTo(map).bindTooltip(esc(h.label));
-    markers[h.id].setLatLng([h.lat, h.lon]).setStyle({ fillColor: c, color: h.sim ? "#0f1419" : "#38bdf8" });
+    markers[h.id].setLatLng([h.lat, h.lon]).setStyle({ fillColor: c, color: h.sim ? "#161311" : "#ff5d8f" });
   }
   for (const id of Object.keys(markers)) if (!seen.has(id)) { map.removeLayer(markers[id]); delete markers[id]; }
   const inc = s.incident;
   if (inc && ringId !== inc.inc_id) {
     if (ring) map.removeLayer(ring);
-    ring = L.circle([inc.lat, inc.lon], { radius: inc.ring_m, color: "#ef4444", weight: 3, fillColor: "#ef4444", fillOpacity: .08 }).addTo(map);
+    ring = L.circle([inc.lat, inc.lon], { radius: inc.ring_m, color: "#e3362a", weight: 4, fillColor: "#e3362a", fillOpacity: .1 }).addTo(map);
     ringId = inc.inc_id; map.flyTo([inc.lat, inc.lon], 17, { duration: .8 });
   }
   if (!inc && ring) { map.removeLayer(ring); ring = null; ringId = null; }
