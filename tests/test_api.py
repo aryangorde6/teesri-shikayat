@@ -18,6 +18,16 @@ def test_public_state_hides_telegram_ids_and_rounds_real_locations(env, monkeypa
     assert s["incident"]["fired"]["homes"] == 3 and len(s["homes"]) >= 23
 
 
+def test_public_state_leaves_out_real_homes_outside_the_ring(env):
+    store.upsert_household("tg5366659078", lat=18.962234, lon=72.836811, ward="B", channel="telegram", consent_ts="x")
+    store.upsert_household("tg77", lat=19.1197, lon=72.8464, ward="B", channel="telegram", consent_ts="y")  # 17 km away
+    s = api.state()
+    homes = {h["id"]: h for h in s["homes"]}
+    assert homes["phone-1"]["label"] == "My phone (real)" and homes["phone-2"]["label"] == "Real phone 2"
+    assert all(homes[p]["lat"] is None and homes[p]["lon"] is None for p in ("phone-1", "phone-2"))  # no incident yet
+    assert "19.1" not in json.dumps(s, default=str)
+
+
 def test_demo_controls_need_the_token_and_only_answer_for_simulated_homes(env, monkeypatch):
     monkeypatch.setattr(api, "console_token", lambda: "t0ken")
     assert api.action({}, json.dumps({"action": "seed"}))[0] == 401

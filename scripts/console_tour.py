@@ -2,8 +2,9 @@
 video plus a beat sheet (seconds into the video for each beat) for the editor.
 
 Demo actions go straight to /api/action with the console token read from SSM; the token is never typed into the page.
-Usage: AWS_PROFILE=hackathon .venv/bin/python scripts/console_tour.py [--third stand-in|phone] [--out video/web-tour]
-  --third stand-in (default): a simulated stand-in files the third report and answers "not clean"; real phones muted;
+Usage: AWS_PROFILE=hackathon .venv/bin/python scripts/console_tour.py [--third stand-in|phone] [--loud] [--out video/web-tour]
+  --third stand-in (default): a simulated stand-in files the third report and answers "not clean"; real phones muted
+                              (--loud: not muted, for a take where no real home is in the ring);
                               the demo sits at the Dongri pin (your phone's home, if elsewhere, stays outside the ring)
   --third phone: waits for your phone's voice note, approval tap and "नहीं" (real recording run; quiet mode off)
 """
@@ -53,7 +54,7 @@ def wait_status(*wanted: str, timeout: int = 600) -> dict:
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    act("quiet", on=THIRD != "phone")
+    act("quiet", on=THIRD != "phone" and "--loud" not in ARGS)
     act("anchor", at="phone" if THIRD == "phone" else "dongri")  # stand-in runs sit at the Dongri pin, wherever the phone is
     act("reset")
     act("seed")

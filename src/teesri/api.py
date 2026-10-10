@@ -1,7 +1,9 @@
 """The console's API (served by the same Function URL).
 
 GET  /api/state   read-only snapshot for the map, phone wall, Safety tab, inbox and timeline. Public, so it never
-                  shows Telegram ids (real homes become "phone-1") and rounds real homes' locations to ~100 m.
+                  shows Telegram ids (real homes become "phone-1", "phone-2", … in the order they joined), and shows a
+                  real home's location (rounded to ~100 m) only while it is in the current incident (a reporter, or
+                  inside the ring, whose area is public anyway); otherwise lat/lon are null and the map leaves it out.
 GET  /api/audio   ?key=audio/<inc>/<template>.mp3 -> short-lived S3 link (the phone wall plays warnings)
 POST /api/action  demo controls; needs the x-console-token header (SSM /teesri/console-token)
 """
@@ -26,7 +28,7 @@ def console_token() -> str:
 def state() -> dict:
     items = store.scan_prefix("")
     profiles = {i["PK"][3:]: i for i in items if i["PK"].startswith("HH#") and i["SK"] == "PROFILE"}
-    real_ids = sorted(h for h in profiles if not h.startswith("sim-"))
+    real_ids = sorted((h for h in profiles if not h.startswith("sim-")), key=lambda h: (str(profiles[h].get("consent_ts") or "~"), h))
     alias = {h: f"phone-{n}" for n, h in enumerate(real_ids, 1)}
 
     def public(hh_id: str) -> str:
@@ -57,11 +59,12 @@ def state() -> dict:
             continue
         sim = hh_id.startswith("sim-")
         lat, lon = float(h["lat"]), float(h["lon"])
+        shown = sim or hh_id in ring_hh or hh_id in members
         last = sorted(msgs.get(hh_id, []), key=lambda m: m["SK"])[-4:]
         homes.append({
             "id": public(hh_id), "sim": sim,
-            "label": h.get("label") or "My phone (real)",
-            "lat": lat if sim else round(lat, 3), "lon": lon if sim else round(lon, 3),
+            "label": h.get("label") or ("My phone (real)" if public(hh_id) == "phone-1" else f"Real phone {public(hh_id)[6:]}"),
+            "lat": (lat if sim else round(lat, 3)) if shown else None, "lon": (lon if sim else round(lon, 3)) if shown else None,
             "reported": hh_id in reported, "member": hh_id in members, "in_ring": hh_id in ring_hh,
             "warned": bool(inc) and hh_id in ring_hh and inc.get("warned_ts") is not None,
             "checkin": chk.get(hh_id),

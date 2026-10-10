@@ -269,6 +269,7 @@ function colour(h) {
 function drawMap(s) {
   const seen = new Set();
   for (const h of s.homes) {
+    if (h.lat == null) continue;  // a real home outside the ring: its place is not public
     seen.add(h.id);
     const c = colour(h), r = h.sim ? 7 : 10;
     if (!markers[h.id]) markers[h.id] = L.circleMarker([h.lat, h.lon], { radius: r, weight: h.sim ? 2 : 4, color: "#161311", fillOpacity: 1 })
@@ -318,7 +319,7 @@ function wallHtml(s) {
     const btn = last && last.buttons.length ? last.buttons[0][0].data : "";
     const ck = btn.startsWith("ck|") && h.checkin == null && h.sim;
     const ap = btn.startsWith("ap|") && h.sim && s.incident && s.incident.status === "AWAITING_APPROVAL";
-    const name = h.sim ? h.id.replace("sim-", "Home ").replace("Home bldg-", "Flat ").replace("Home vol", "Volunteer").replace("Home me", "Stand-in") : "My phone (real)";
+    const name = h.sim ? h.id.replace("sim-", "Home ").replace("Home bldg-", "Flat ").replace("Home vol", "Volunteer").replace("Home me", "Stand-in") : h.label;
     return `<div class="${cls}"${wide}><h4><span>${esc(name)}</span><span>${h.checkin === true ? "✓ clean" : h.checkin === false ? "✗ dirty" : h.member ? "reported" : h.warned ? "warned" : ""}</span></h4>
       <div class="msg">${text ? esc(text.text) : h.sim ? "—" : "messages go to Telegram"}</div>
       <div class="acts">${voice ? `<span class="voice" data-audio="${esc(voice.audio_key)}">▶ voice</span>` : ""}
