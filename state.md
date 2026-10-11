@@ -1,6 +1,6 @@
 # State: what's built so far
 
-Last updated: Sun 11 Oct 2026, 16:27 IST · Event: WeMakeDevs × AWS Environmental Hacks (Heat and Water), Oct 8–11
+Last updated: Sun 11 Oct 2026, 17:17 IST · Event: WeMakeDevs × AWS Environmental Hacks (Heat and Water), Oct 8–11
 
 **Teesri Shikayat** ("the third complaint"): residents send Hindi voice notes about dirty tap water on Telegram. When 3 homes within 250 m report it inside 72 h, everyone enrolled nearby is warned, and only residents can close the case.
 
@@ -130,6 +130,8 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
    - **Don't:** use the console's demo controls (wipes the judged run), switch the model on, or send a location or a dirty-water complaint from Aryan's phone (its home is set to Dongri, inside the open case's 250 m: a dirty report would join the demo case and the console would no longer match the video; any location sent replaces Dongri).
 
 ## Open issues
+
+- **Deadline moved (seen Sun 17:17):** the event page's countdown now targets `2026-10-11T18:29:00Z` = **Sun 11 Oct 23:59 IST** (was 20:00). The submission stays editable until then. Aryan plans to publish the Builder Center blog at 20:10 and link it in the submission's Blog links before 23:59. Student verification on Builder Center ("Required to compete") not yet confirmed: the Students page shows "Verify now"; Aryan to check.
 
 - **Sat 17 Oct ~17:35 IST:** the judged case's ward wait (7 days) ends and it becomes `NO_WARD_REPLY`; expected, and the console shows it (fixed Sun 16:27). Nothing to do.
 
