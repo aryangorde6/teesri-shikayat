@@ -40,7 +40,7 @@ Ship it (services), one CDK stack in ap-south-1, three Lambdas (Python 3.13, arm
 
 Build it (open source): Strands Agents SDK, Cedar (cedarpy) and the AWS CDK (Python).
 
-**Proof.** 66 tests (moto, no AWS account needed) cover the tripwire, the ring, the closure rule, the Cedar policies and the public API; `scripts/preflight.py` runs 11 checks against the live stack. The console and the bot are live now.
+**Proof.** 66 tests (moto, no AWS account needed) cover the tripwire, the ring, the closure rule, the Cedar policies and the public API, and run on GitHub Actions on every push; `scripts/preflight.py` checks the live stack, and `--security` checks 10 more (the key, backups, CloudTrail, GuardDuty, Access Analyzer, the alarms). The console and the bot are live now.
 
 ## Team leader's contributions
 

@@ -1,5 +1,7 @@
 # Teesri Shikayat — the third complaint
 
+[![tests](https://github.com/aryangorde6/teesri-shikayat/actions/workflows/tests.yml/badge.svg)](https://github.com/aryangorde6/teesri-shikayat/actions/workflows/tests.yml)
+
 **A tripwire for dirty tap water.** When three homes close together report dirty water, everyone around them is warned, and only the residents can close the case.
 
 **Live:** [the console on AWS](https://eirioqqhvtvve3aw5xhpje2wju0jztrl.lambda-url.ap-south-1.on.aws/console) (the recorded demo run: the ring, the warned homes, the ward office's "Resolved" denied, the case reopened) · **Try the bot:** [@TeesriShikayatBot](https://t.me/TeesriShikayatBot?start=B) on Telegram (Hindi)
@@ -88,7 +90,7 @@ The timers are a real deployment's; the demo runs a faster clock (30 min, 7 days
 
 **Cost:** one real incident (23 homes warned, one reopen) cost **₹0.94 ($0.0107)**, measured from its own Step Functions history and Lambda logs and priced with the AWS Pricing API (`scripts/cost_per_incident.py`). The model instance is extra while it is on ($0.43/h), and it stops itself after an idle hour.
 
-**Proof:** 66 tests (moto, no AWS account needed) cover the tripwire, the ring, the closure rule, the Cedar policies and the public API; `scripts/preflight.py` runs 11 checks against the live stack.
+**Proof:** 66 tests (moto, no AWS account needed) cover the tripwire, the ring, the closure rule, the Cedar policies and the public API, and run on GitHub Actions on every push. `scripts/preflight.py` checks the live stack before a recording (webhook, Pipe, console, Case Lambda, model); `--security` checks 10 more against what the Security section below says: the key, rotation, backups, deletion protection, CloudTrail, GuardDuty, Access Analyzer, the alarms, the alert subscription and the media bucket.
 
 ## The model decides language; code decides actions
 
@@ -120,6 +122,18 @@ The timers are a real deployment's; the demo runs a faster clock (30 min, 7 days
 - **Indore replay:** a labelled reconstruction. Complaint dates are not public, so it assumes three complaints on Dec 15–17.
 - **Channel:** Telegram for the demo. WhatsApp plugs into the same adapter (`src/teesri/channel.py`).
 
+## Limits, and what's next
+
+- **It needs neighbours on it.** An alarm needs three enrolled homes within 250 m inside 72 hours; in a lane where nobody has joined, nothing fires. So joining has to happen where water already gets talked about: a QR poster on the building's water tank or the society notice board, with the volunteer from a group that already works with the ward (in Mumbai, the ward's Advanced Locality Management groups).
+- **One person with three phones could fake three homes.** A home's location is whatever the resident shares on Telegram, and the pin can be dragged. Telegram ties each account to a phone number, so it costs three SIMs, and nothing reaches the ring or the ward office until a local volunteer has read all three complaints and approved (Cedar: approval-before-broadcast). A real rollout would add a volunteer-checked address for the first report from each building.
+- **It detects complaints, not contamination.** Three complaints say "look here", not "this water is unsafe". The warning says boil the water and see a doctor; the ward office still has to test it.
+- **The thresholds are chosen by hand.** 3 homes, 250 m and 72 hours are a lane-sized ring over a few days, checked only against the Indore replay. Next: replay a ward's real complaint records, if the BMC shares them, to tune them.
+- **Only Dongri has local data.** The population grid (`src/teesri/data/ghs_pop_dongri.json`) and the hospital list (`clinics_dongri.json`, two entries) cover B ward. An alarm elsewhere would show "NO DATA" for population and still name a Dongri hospital. Next: run `scripts/precompute_population.py` and build an OpenStreetMap hospital list for every ward, and leave the hospital out when none is close.
+- **Hindi and Telegram only.** The bot's words live in `src/teesri/texts.py`; Marathi is the next language for Mumbai. WhatsApp plugs into the channel adapter (`src/teesri/channel.py`).
+- **Bad microphones lose words.** Transcribe can miss a voice note recorded badly (it happened in our own recording through a laptop speaker), so the bot asks the colour with buttons instead: slower, but the report isn't lost.
+- **The model runs on one instance.** This account's Bedrock quota was 0, so Gemma runs on one EC2 instance that stops when idle. When it is off, a keyword reader and fixed templates take over, and the Safety tab says so. Next: Nova on Bedrock, one setting, once the quota opens.
+- **The ward office is a test inbox.** Real use needs the ward's agreement and SES production access. This project is not affiliated with the BMC.
+
 ## Run it
 
 ```bash
@@ -128,6 +142,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 ./build.sh && AWS_PROFILE=<profile> cdk deploy                          # one stack: Teesri (ap-south-1)
 AWS_PROFILE=<profile> .venv/bin/python scripts/set_webhook.py           # point the Telegram bot at the stack
 AWS_PROFILE=<profile> aws sns subscribe --protocol email --topic-arn <AlertsTopicArn> --notification-endpoint <you>  # failure alerts; confirm the email
+AWS_PROFILE=<profile> .venv/bin/python scripts/preflight.py --security   # 10 checks: the live stack matches Security below
 AWS_PROFILE=<profile> .venv/bin/python scripts/scenario.py model on      # start the model instance (stops itself when idle)
 AWS_PROFILE=<profile> .venv/bin/python scripts/scenario.py seed          # 22 simulated homes; then open <FunctionUrl>/console
 ```

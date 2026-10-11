@@ -1,6 +1,7 @@
 """One command before recording: is everything live and in the right mode? Prints secrets nowhere.
+Then security and recovery: is the stack still what README → Security says? Read-only.
 
-Usage: AWS_PROFILE=hackathon .venv/bin/python scripts/preflight.py
+Usage: AWS_PROFILE=hackathon .venv/bin/python scripts/preflight.py [--security]   (--security: only those checks)
 """
 import json
 import os
@@ -26,9 +27,61 @@ def warn(name: str, detail: str) -> None:
     print(f"⚠️  {name} — {detail}")
 
 
+def security(out: dict) -> None:
+    print("\nSecurity and recovery")
+    ddb, kms = boto3.client("dynamodb", region_name=REGION), boto3.client("kms", region_name=REGION)
+    table = ddb.describe_table(TableName=out["TableName"])["Table"]
+    key = kms.describe_key(KeyId="alias/teesri-data")["KeyMetadata"]
+    sse = table.get("SSEDescription", {})
+    check("Table encrypted with our own KMS key", sse.get("Status") == "ENABLED" and sse.get("KMSMasterKeyArn") == key["Arn"])
+    check("Key rotation on", kms.get_key_rotation_status(KeyId=key["KeyId"])["KeyRotationEnabled"])
+    pitr = ddb.describe_continuous_backups(TableName=out["TableName"])["ContinuousBackupsDescription"].get(
+        "PointInTimeRecoveryDescription", {})
+    check("Point-in-time recovery on", pitr.get("PointInTimeRecoveryStatus") == "ENABLED",
+          f"can restore back to {pitr['EarliestRestorableDateTime']:%d %b %H:%M}" if "EarliestRestorableDateTime" in pitr else "")
+    check("Deletion protection on", table.get("DeletionProtectionEnabled", False))
+
+    ct = boto3.client("cloudtrail", region_name=REGION)
+    trails = [t for t in ct.describe_trails()["trailList"] if t["Name"].startswith("Teesri-")]
+    check("CloudTrail logging, with log-file validation",
+          bool(trails) and all(t["LogFileValidationEnabled"] and ct.get_trail_status(Name=t["TrailARN"])["IsLogging"] for t in trails))
+    gd = boto3.client("guardduty", region_name=REGION)
+    detectors = gd.list_detectors()["DetectorIds"]
+    check("GuardDuty on", bool(detectors) and gd.get_detector(DetectorId=detectors[0])["Status"] == "ENABLED")
+
+    aa = boto3.client("accessanalyzer", region_name=REGION)
+    analyzer = next((a for a in aa.list_analyzers(type="ACCOUNT")["analyzers"] if a["name"] == "teesri-external-access"), None)
+    open_to_outside = sorted(f["resource"].rsplit(":", 1)[-1] for f in aa.list_findings_v2(
+        analyzerArn=analyzer["arn"], filter={"status": {"eq": ["ACTIVE"]}})["findings"]
+        if ":Teesri-" in f["resource"] or ":::teesri-" in f["resource"]) if analyzer else None
+    check("Only the Function URL is reachable from outside (Access Analyzer)",
+          open_to_outside is not None and len(open_to_outside) == 1 and open_to_outside[0].startswith("Teesri-Api"),
+          f"open: {open_to_outside}")
+
+    alarms = boto3.client("cloudwatch", region_name=REGION).describe_alarms(AlarmNamePrefix="Teesri-")["MetricAlarms"]
+    firing = [a["AlarmName"].split("Alarm")[0].removeprefix("Teesri-") for a in alarms if a["StateValue"] == "ALARM"]
+    check("Five failure alarms wired to the alert topic, none firing",
+          len(alarms) == 5 and all(out["AlertsTopicArn"] in a["AlarmActions"] for a in alarms) and not firing,
+          f"firing: {', '.join(firing)}" if firing else "")
+    subs = boto3.client("sns", region_name=REGION).list_subscriptions_by_topic(TopicArn=out["AlertsTopicArn"])["Subscriptions"]
+    confirmed = [x for x in subs if x["SubscriptionArn"].startswith("arn:")]  # pending ones say "PendingConfirmation"
+    check("Someone gets the alert emails (subscription confirmed)", bool(confirmed), f"{len(confirmed)} confirmed")
+
+    s3 = boto3.client("s3", region_name=REGION)
+    block = s3.get_public_access_block(Bucket=out["BucketName"])["PublicAccessBlockConfiguration"]
+    rules = {r["ID"]: r.get("Expiration", {}).get("Days") for r in
+             s3.get_bucket_lifecycle_configuration(Bucket=out["BucketName"])["Rules"]}
+    check("Media bucket private; voice notes and transcripts expire after 30 days",
+          all(block.values()) and rules.get("expire-voice") == 30 and rules.get("expire-transcripts") == 30)
+
+
 def main() -> None:
     out = {o["OutputKey"]: o["OutputValue"] for o in boto3.client("cloudformation", region_name=REGION)
            .describe_stacks(StackName="Teesri")["Stacks"][0]["Outputs"]}
+    if "--security" in sys.argv:
+        security(out)
+        print("\nSECURE" if ok else "\nNOT AS DOCUMENTED: fix the ❌ lines above")
+        sys.exit(0 if ok else 1)
     base = out["FunctionUrl"].rstrip("/")
 
     ssm = boto3.client("ssm", region_name=REGION)
@@ -60,6 +113,8 @@ def main() -> None:
     res = fn.invoke(FunctionName=case["FunctionName"], Payload=json.dumps({"step": "selftest"}).encode())
     body = json.loads(res["Payload"].read() or b"{}")
     check("Case Lambda: Strands + Cedar load", "FunctionError" not in res, f"strands {body.get('strands')}, cedarpy {body.get('cedarpy')}")
+    security(out)
+    print()
     backend = case.get("Environment", {}).get("Variables", {}).get("MODEL_BACKEND", "bedrock")
     if backend == "selfhost":  # the open model on our instance: does it answer through the queue right now?
         os.environ.update(TABLE=out["TableName"], MODEL_BACKEND="selfhost", AWS_DEFAULT_REGION=REGION,
