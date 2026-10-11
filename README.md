@@ -14,7 +14,9 @@ Built for the WeMakeDevs × AWS **Environmental Hacks** (Heat and Water track), 
 - Averages hide pockets: 0.28% of samples were unfit citywide in 2025-26, but **4.03% in B ward (Dongri/Umarkhadi)** (same source). A leaking service line pulls sewage into one lane, not the whole city.
 - **Complaints arrive one by one, and nobody connects them.** In Indore's Bhagirathpura (Dec 2025), residents reported discoloured, foul water from mid-December; the first illness came on Dec 27 and over 1,400 people fell ill ([Wikipedia](https://en.wikipedia.org/wiki/2025_Indore_drinking_water_contamination)). A judicial commission examined 36 deaths and linked 24 directly to sewage in the pipeline, as reported by [ETV Bharat](https://www.etvbharat.com/en/bharat/600-page-report-unravels-bhagirathpura-deaths-in-indore-enn26090102772) (the report is not public).
 
-BMC's SOP asks for immediate alerts to residents. Teesri Shikayat does that from the street up, and lets residents confirm when the tap is clean.
+**What people told us.** On 11 Oct 2026 I phoned 10 people in Mumbai, Pune, Amravati, Delhi, Baroda and Vellore and asked two questions: does your tap water turn dirty in the monsoon, and who did you tell? Most said they had not known their water was dirty, and most said reaching the BMC or their local water authority was the hard part. One had fallen ill from a sewage pipe leak and spent 2–3 days in hospital. (A phone survey of 10, summarised, not a study.)
+
+BMC's SOP asks for immediate alerts to residents. Teesri Shikayat does that from the street up: the homes that didn't know are warned by their neighbours' complaints, the ward office gets one joined-up case instead of scattered calls, and residents confirm when the tap is clean.
 
 ![Console: the ring, its card and the phone wall after the warning](docs/img/console-warned.jpg)
 *The console in the recorded demo run (simulated homes A–V; a simulated stand-in files the third report). Every enrolled home in the 250 m ring was warned; 20 of 23 never complained.*
