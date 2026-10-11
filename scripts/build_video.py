@@ -5,7 +5,9 @@ unset in-point becomes a labelled placeholder, so the full 2:48 can be previewed
 Usage: .venv/bin/python scripts/build_video.py [--mode agent|template] [--voice voice.wav] [--subs voice.srt]
                                                 [--out video/out/teesri.mp4] [--only 7]
 """
+import contextlib
 import json
+import os
 import pathlib
 import re
 import shutil
@@ -36,6 +38,23 @@ def pick(d: dict, key: str, default=None):
 
 def ff(*a):
     subprocess.run(["ffmpeg", "-loglevel", "error", "-y", *map(str, a)], check=True)
+
+
+def has_ink(png: pathlib.Path) -> bool:
+    from PIL import Image
+    im = Image.open(png)
+    return "A" not in im.getbands() or im.getchannel("A").getbbox() is not None  # no alpha channel = opaque = ink
+
+
+def subs_on_screen(video: pathlib.Path, cues: list) -> list:
+    """The cues whose middle frame shows no subtitle box (white text in the subtitle band): what the render lost."""
+    lost = []
+    for a, b, t in cues:
+        raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-ss", f"{(a + b) / 2:.2f}", "-i", str(video), "-vf",
+                              "crop=1700:62:110:990,format=gray", "-frames:v", "1", "-f", "rawvideo", "-"], capture_output=True).stdout
+        if sum(1 for x in raw if x > 235) < 1000:
+            lost.append(f"{a:.1f}s {t[:40]}")
+    return lost
 
 
 def has_audio(path) -> bool:
@@ -128,7 +147,14 @@ class Text:
         page = self.browser.new_page(viewport={"width": w, "height": h})
         page.set_content(f"<!doctype html><meta charset=utf-8><style>{self.CSS % (w, h)}</style><body>{body}</body>")
         path = self.tmp / f"text{self.n:03d}.png"
-        page.screenshot(path=str(path), omit_background=True)
+        page.evaluate("document.fonts.ready.then(() => 1)")
+        for _ in range(3):  # a page screenshotted before it paints comes out empty: try again rather than burn in nothing
+            page.screenshot(path=str(path), omit_background=True)
+            if not body.strip() or has_ink(path):
+                break
+            page.wait_for_timeout(250)
+        else:
+            print(f"  text: empty render after 3 tries: {body[:60]}", flush=True)
         page.close()
         return path
 
@@ -409,7 +435,9 @@ def main() -> None:
     shots = [s for s in edl["shots"] if not ONLY or str(s["n"]) == ONLY]
     OUT.parent.mkdir(parents=True, exist_ok=True)
     # scratch files go next to the output, not /tmp: on a machine where /tmp is RAM, 1080p intermediates got the render killed
-    with tempfile.TemporaryDirectory(dir=OUT.parent, prefix=".build-") as td:
+    keep = os.environ.get("KEEP_SCRATCH")  # keep the intermediates (video.mp4, subs.ffconcat, text*.png) to debug a render
+    with (contextlib.nullcontext(tempfile.mkdtemp(dir=OUT.parent, prefix=".build-keep-")) if keep else
+          tempfile.TemporaryDirectory(dir=OUT.parent, prefix=".build-")) as td:
         tmp = pathlib.Path(td)
         text = Text(tmp)
         try:
@@ -431,12 +459,18 @@ def main() -> None:
             audio = loudness(tmp / "mix.wav", tmp / "mix-norm.wav")
         video = tmp / "video.mp4"
         if track:
-            ff("-i", video, "-f", "concat", "-safe", 0, "-i", track, "-filter_complex",
-               "[1:v]format=rgba[s];[0:v][s]overlay=0:0:eof_action=pass", *VENC, "-an", tmp / "video-subs.mp4")
+            # the cue pngs become a plain 30 fps video with alpha first: overlaying the sparse image stream directly
+            # dropped a different set of subtitles on every run (a race in ffmpeg's frame sync); two CFR streams pair 1:1
+            ff("-f", "concat", "-safe", 0, "-i", track, "-vf", f"fps={FPS},format=rgba", "-c:v", "qtrle", tmp / "subs.mov")
+            ff("-i", video, "-i", tmp / "subs.mov", "-filter_complex", "[0:v][1:v]overlay=0:0:eof_action=pass", *VENC, "-an",
+               tmp / "video-subs.mp4")
             video = tmp / "video-subs.mp4"
         ff("-i", video, "-i", audio, "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest", OUT)
     d = duration(OUT)
     print(f"{OUT}  {int(d // 60)}:{d % 60:04.1f}  (limit 3:00)")
+    if SUBS and not ONLY:
+        lost = subs_on_screen(OUT, sub_cues(ROOT / SUBS))
+        print("subtitles: all on screen" if not lost else f"subtitles MISSING ({len(lost)}): " + "; ".join(lost))
 
 
 if __name__ == "__main__":

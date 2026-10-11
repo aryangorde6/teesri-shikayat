@@ -303,7 +303,7 @@ def survey() -> tuple:
 .city {{ font-size:34px; padding:14px 26px; border:4px solid var(--ink); box-shadow:8px 8px 0 rgba(0,0,0,.6); }}
 .st {{ left:1300px; top:540px; font-size:92px; --r:-7deg; mix-blend-mode:normal; }}
 .why {{ left:1316px; top:735px; font-size:25px; color:var(--paper); line-height:1.5; }}
-.src {{ left:98px; top:990px; font-size:20px; color:var(--paper); }}
+.src {{ left:98px; top:52px; font-size:20px; color:var(--paper); }}  /* above the page: the subtitles own the bottom */
 </style>
 <div class="abs bg"></div>
 <div class="abs half" style="--hc:var(--red);--hs:18px;left:1250px;top:300px;width:900px;height:900px;opacity:.22"></div>
@@ -319,7 +319,7 @@ def survey() -> tuple:
   </div>
 </div>
 <div class="abs cities">{tags}</div>
-<div class="abs stamp st sm" style="{stamp_mask()}">1 in hospital</div>
+<div class="abs stamp slam st sm" style="{stamp_mask()}">1 in hospital</div>
 <div class="abs why typed pop wy">a friend in Delhi · sewage pipe leak<br>2–3 days in hospital</div>
 <div class="abs src typed sr pop">My phone survey of 11 people, summarised. Not a study.</div>
 {grain()}"""
@@ -527,7 +527,7 @@ def cost() -> tuple:
 <div class="abs big cond slam bg1" style="--r:-3deg">₹1</div>
 <div class="abs per cond pop pp">per incident</div>
 <div class="abs rcp drop rc" style="{torn(9, 'b', 26, 22)}"><div class="roll ro">{receipt}</div></div>
-<div class="abs stamp st sm" style="{stamp_mask()}">measured</div>
+<div class="abs stamp slam st sm" style="{stamp_mask()}">measured</div>
 <div class="abs src typed sr pop">Step Functions history + Lambda logs of a live run, priced with the AWS Pricing API (ap-south-1, on-demand,
 no free tier). Telegram messages are free. The model instance is extra: $0.43/h while on; it stops itself when idle.</div>
 {grain()}"""
@@ -564,7 +564,7 @@ svg.w {{ left:0; top:0; width:1920px; height:1080px; }}
 <div class="abs sheet sh" style="{torn(12, 'r', 40, 26)}"></div>
 <div class="abs tag k pop kk">Teesri Shikayat · <span class="deva" style="letter-spacing:0;font-size:27px">तीसरी शिकायत</span></div>
 <div class="abs h1 cond"><span class="ln"><span class="l">Closed at</span></span><span class="ln"><span class="l">the tap,</span></span></div>
-<div class="abs stamp st sm" style="{stamp_mask()}">not on paper.</div>
+<div class="abs stamp slam st sm" style="{stamp_mask()}">not on paper.</div>
 <div class="abs links typed"><div class="pop u1" style="--r:-.6deg"><span>CODE</span>{E(repo)}</div>
   <div class="pop u2" style="--r:.4deg"><span>LIVE</span>{E(D["live_url"]["value"])}</div></div>
 <div class="abs fine typed pop f">Not affiliated with BMC or any water board. Demo homes are simulated, except mine.<br>
