@@ -6,64 +6,64 @@ The narration from `~/aws_environment/prep/video-script.md`, one section per slo
 
 Every monsoon in Mumbai, the water from my tap turns dirty. I never knew if the house next door had it too.
 
-## 0:07–0:15 · 1b survey
+## 0:07–0:17 · 1b survey
 
 So I asked eleven people in six cities. Most never knew their water was dirty. One friend ended up in hospital after a sewage leak.
 
-## 0:15–0:23 · 2 Indore
+## 0:17–0:25 · 2 Indore
 
 In Indore last December, a leaking pipe pulled sewage into the taps. People complained one by one. Thirty-six died.
 
-## 0:23–0:35 · 3 the idea
+## 0:25–0:37 · 3 the idea
 
 This is Teesri Shikayat, the third complaint. When three homes close together report dirty water, everyone around them is warned. And only the residents can close the case.
 
-## 0:35–0:44 · 4 Mumbai
+## 0:37–0:46 · 4 Mumbai
 
 Mumbai logged over fifteen hundred dirty-water complaints this year. Last week, the city said: warn residents at once.
 
-## 0:44–0:53 · 5 joining
+## 0:46–0:55 · 5 joining
 
 Nothing new to learn. Scan a code, tap Start on Telegram, share your location, and you're in.
 
-## 0:53–0:58 · 6 voice note
+## 0:55–1:00 · 6 voice note
 
 Then you complain the way people actually do: a voice note, in Hindi.
 
-<!-- 0:58–1:03: the Hindi voice note plays alone (edl.json shot 6 "sounds"), no narration under it. -->
+<!-- 1:00–1:05: the Hindi voice note plays alone (edl.json shot 6 "sounds"), no narration under it. -->
 
-## 1:03–1:12 · 6 transcript
+## 1:05–1:14 · 6 transcript
 
 Amazon Transcribe writes it down, and Gemma, an open model on our own AWS server, pulls out what matters: the colour, the smell, how long, and who's sick.
 
-## 1:12–1:24 · 7 tripwire
+## 1:14–1:26 · 7 tripwire
 
 Two neighbours already reported. Mine is the third within two hundred and fifty metres in three days. The tripwire fires, and the ring is marked as a likely pipe leak.
 
-## 1:24–1:37 · 8 volunteer
+## 1:26–1:39 · 8 volunteer
 
 A case agent built with Strands reads all three complaints and briefs a local volunteer in Hindi. One tap to approve.
 
-## 1:37–1:49 · 9 warning
+## 1:39–1:51 · 9 warning
 
 Everyone in the ring hears this. Twenty of these homes never complained.
 
-## 1:49–1:58 · 10 ward email
+## 1:51–2:00 · 10 ward email
 
 The agent writes the ward office a formal complaint. Names and numbers never leave the lane. Cedar enforces that.
 
-## 1:58–2:17 · 11 closed at the tap
+## 2:00–2:19 · 11 closed at the tap
 
 Two days later, the ward office replies: resolved. The agent believes them and tries to close the case. Cedar says no. Only residents can close it. So it asks them. My tap says no. The case reopens.
 
-## 2:17–2:26 · 12 Indore replay
+## 2:19–2:28 · 12 Indore replay
 
 Replayed on Indore's dates, the third complaint would have raised the alarm about ten days before the first person fell ill.
 
-## 2:26–2:41 · 13 AWS
+## 2:28–2:43 · 13 AWS
 
 It all runs serverless on AWS. Step Functions holds each case for days, DynamoDB streams feed the tripwire, and Polly speaks Hindi. One incident costs about one rupee.
 
-## 2:41–2:52 · 14 close
+## 2:43–2:54 · 14 close
 
 Built for the monsoon that floods the street and dirties the tap. Teesri Shikayat: closed at the tap, not on paper.

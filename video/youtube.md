@@ -1,6 +1,6 @@
 # YouTube upload (Sun)
 
-Upload `video/out/teesri.mp4` (2:44) as **Unlisted**. The chapter list in the description turns into chapters on the progress bar by itself (each is at least 10 s, from the narration's timings), then open the link in a signed-out window before putting it in the form. **Thumbnail:** `video/thumbnail.png` (1280×720; YouTube Studio → Details → Thumbnail; custom thumbnails need a phone-verified account, otherwise pick one of YouTube's frames). Under "Altered or synthetic content" the narration is a synthetic voice but not a real person, so "No" is the honest answer; the description says it anyway.
+Upload `video/out/teesri.mp4` (2:54) as **Unlisted**. The chapter list in the description turns into chapters on the progress bar by itself (each is at least 10 s, from the narration's timings), then open the link in a signed-out window before putting it in the form. **Thumbnail:** `video/thumbnail.png` (1280×720; YouTube Studio → Details → Thumbnail; custom thumbnails need a phone-verified account, otherwise pick one of YouTube's frames). Under "Altered or synthetic content" the narration is a synthetic voice but not a real person, so "No" is the honest answer; the description says it anyway.
 
 **Title** (under 100 characters):
 
@@ -16,18 +16,20 @@ Teesri Shikayat ("the third complaint") is a tripwire for dirty tap water. Resid
 Built in four days for the WeMakeDevs × AWS Environmental Hacks (Heat and Water track) on AWS: Lambda, Transcribe (hi-IN), DynamoDB Streams + EventBridge Pipes, Step Functions, Polly, an open model (Gemma 4) on our own EC2 instance with the Strands Agents SDK, and Cedar policies on every action.
 
 Chapters
-0:00 Dirty taps in Mumbai, and Indore
-0:15 Teesri Shikayat: the third complaint
-0:36 Join on Telegram, complain in Hindi
-1:04 The tripwire fires
-1:16 A volunteer approves, every home is warned
-1:41 The ward office says "resolved"; the residents decide
-2:09 Indore replay, and how it runs on AWS
-2:33 Closed at the tap, not on paper
+0:00 My tap, 11 people I asked, and Indore
+0:25 Teesri Shikayat: the third complaint
+0:46 Join on Telegram, complain in Hindi
+1:14 The tripwire fires
+1:26 A volunteer approves, every home is warned
+1:51 The ward office says "resolved"; the residents decide
+2:19 Indore replay, and how it runs on AWS
+2:43 Closed at the tap, not on paper
 
 Code: https://github.com/aryangorde6/teesri-shikayat
 Live console: https://eirioqqhvtvve3aw5xhpje2wju0jztrl.lambda-url.ap-south-1.on.aws/console
 Try the bot (Hindi): https://t.me/TeesriShikayatBot?start=B
+
+The phone survey (0:07) is my summary of 11 calls on 11 Oct 2026, not a study.
 
 What's simulated, and labelled on screen: homes A–V on the phone wall, the "+2 days" demo clock, the ward office's reply and its inbox. My phone is real. The Indore replay is a labelled reconstruction.
 

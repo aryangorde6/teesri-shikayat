@@ -1,4 +1,4 @@
-"""The video's motion cards (shots 2, 3, 4, 13, 14) as 1920x1080 mp4s, every number read from video/slides-data.json.
+"""The video's motion cards (shots 1b, 2, 3, 4, 13, 14) as 1920x1080 mp4s, every number read from video/slides-data.json.
 
 The look is maximalist, from the paperwork the project is against and the street posters around it: newsprint and
 turmeric paper, torn clippings, tape, rubber stamps, halftone, huge Devanagari, condensed caps with hard offset shadows,
@@ -272,6 +272,64 @@ HK.push(t => {{
     d.setAttribute('r', RS[i] * (1 + .6 * (1 - m)) * q); d.style.strokeWidth = (i === 2 ? 4 : 6 * (1 - m)) / s; }});
   gh.style.transform = `translateX(${{-t * 10}}px)`;
 }});"""
+    return body, js
+
+
+SURVEY_CUES = (0.6, 3.5, 6.36)  # shot-relative starts of "So I asked eleven people…", "Most never knew…", "One friend…"
+
+
+def survey() -> tuple:
+    """Aryan's phone survey, 11 Oct: his summary of what 11 people in six cities said (README → The problem)."""
+    a, b, c = SURVEY_CUES
+    cities = [("Mumbai", -4, "yel"), ("Pune", 3, "white"), ("Amravati", -2, "pink"), ("Delhi", 5, "yel"), ("Baroda", -5, "white"),
+              ("Vellore", 2, "pink")]
+    tags = "".join(f'<div class="tag city pop" style="--r:{r}deg;background:var(--{bg})">{E(name)}</div>' for name, r, bg in cities)
+    body = f"""
+<style>
+.bg {{ inset:0; background:var(--ink); }}
+.page {{ left:96px; top:110px; width:1110px; height:850px; --r:-1.2deg; padding:44px 60px 0 150px;
+         background:var(--white) repeating-linear-gradient(transparent 0 58px, rgba(29,63,174,.22) 58px 61px) 0 118px / 100% calc(100% - 118px) no-repeat;
+         box-shadow:0 26px 60px rgba(0,0,0,.5); }}
+.page::before {{ content:""; position:absolute; left:112px; top:0; bottom:0; width:3px; background:rgba(227,54,42,.55); }}
+.page .k {{ font-size:24px; background:var(--ink); color:var(--paper); }}
+.page h1 {{ font-size:200px; margin-top:38px; white-space:nowrap; }}
+.page h1 b {{ color:var(--red); }}
+.page h2 {{ font-size:104px; margin-top:6px; }}
+.page h2 b {{ color:var(--red); }}
+.ans {{ font-size:46px; line-height:61px; margin-top:40px; }}
+.ans p {{ margin-bottom:10px; }}
+.ans p::before {{ content:"✓"; font-family:var(--sans); font-style:normal; color:var(--red); margin-left:-62px; width:62px; display:inline-block; }}
+.cities {{ left:1290px; top:150px; width:520px; display:flex; flex-wrap:wrap; gap:26px 22px; }}
+.city {{ font-size:34px; padding:14px 26px; border:4px solid var(--ink); box-shadow:8px 8px 0 rgba(0,0,0,.6); }}
+.st {{ left:1300px; top:540px; font-size:92px; --r:-7deg; mix-blend-mode:normal; }}
+.why {{ left:1316px; top:735px; font-size:25px; color:var(--paper); line-height:1.5; }}
+.src {{ left:98px; top:990px; font-size:20px; color:var(--paper); }}
+</style>
+<div class="abs bg"></div>
+<div class="abs half" style="--hc:var(--red);--hs:18px;left:1250px;top:300px;width:900px;height:900px;opacity:.22"></div>
+<div class="abs ghost deva gh" style="font-size:520px;left:700px;top:-150px;line-height:1;--gs:rgba(242,232,208,.07)">सवाल</div>
+<div class="abs page drop pg" style="{torn(31, 'b', 44, 10)}">
+  <div class="tape" style="left:430px;top:-16px;transform:rotate(3deg)"></div>
+  <span class="tag k pop kk" style="--r:-1deg">Phone survey · 11 Oct 2026</span>
+  <h1 class="cond"><span class="ln"><span class="l1"><b>11</b> people.</span></span></h1>
+  <h2 class="cond"><span class="ln"><span class="l2">in <b>6</b> cities.</span></span></h2>
+  <div class="ans serif">
+    <p class="pop a1"><span class="mark m1">Most never knew their water was dirty.</span></p>
+    <p class="pop a2">Most found it hard to reach the BMC or their water office.</p>
+  </div>
+</div>
+<div class="abs cities">{tags}</div>
+<div class="abs stamp st sm" style="{stamp_mask()}">1 in hospital</div>
+<div class="abs why typed pop wy">a friend in Delhi · sewage pipe leak<br>2–3 days in hospital</div>
+<div class="abs src typed sr pop">My phone survey of 11 people, summarised. Not a study.</div>
+{grain()}"""
+    js = f"""
+K('.pg', '--o', IN({a - .5:.2f}, .5), 'back'); K('.kk', '--o', IN({a - .1:.2f}, .4), 'back'); K('.l1', '--o', IN({a + .25:.2f}, .7)); K('.l2', '--o', IN({a + .9:.2f}, .6));
+K('.city', '--o', (i) => IN({a + 1.1:.2f} + i * .18, .35), 'back');
+K('.a1', '--o', IN({b:.2f}, .4), 'back'); K('.m1', '--o', IN({b + .4:.2f}, .8), 'io'); K('.a2', '--o', IN({b + 1.3:.2f}, .4), 'back');
+K('.sm', '--o', SLAM({c + 1.15:.2f}), 'inq'); K('.wy', '--o', IN({c + 1.6:.2f}, .4)); K('.sr', '--o', IN({a + .8:.2f}, .4));
+const gh = document.querySelector('.gh');
+HK.push(t => {{ gh.style.transform = `translateX(${{-t * 8}}px)`; }});"""
     return body, js
 
 
@@ -551,7 +609,7 @@ def thumbnail() -> str:
 {grain()}</div>"""
 
 
-CARDS = {"02-indore": indore, "03-title": title, "04-mumbai": mumbai, "13a-architecture": arch, "13b-cost": cost, "14-close": close}
+CARDS = {"01b-survey": survey, "02-indore": indore, "03-title": title, "04-mumbai": mumbai, "13a-architecture": arch, "13b-cost": cost, "14-close": close}
 STILL_AT = {"03-title": 3.5}  # the title's last frame is the map; its still shows the name
 
 
