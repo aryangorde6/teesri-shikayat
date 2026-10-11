@@ -125,7 +125,7 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
 7. **Remaining, as of Sun 13:58** (deadline Sun 11 Oct 20:00 IST; submit by ~16:00). Done today: alerts + backups (10:15), security pass (10:55), license, CI, chapters, Limits section, `preflight.py --security` (11:11), repo topics (11:16), the 11-person phone survey in README + writeup (11:31), the survey card in the video + subtitles fixed (12:50). Everything else was done before: build, video, README, writeup as form fields, live console (finished run, `inc-20261007-cb9cae`), model off.
    - ✅ **Preview approved, video posted** (13:36): https://youtu.be/L0UteWpltyw, in README + writeup.
    - **Optional, Aryan's word:** "shorten it" = the one-sentence AI-tools line (my advice: keep it).
-   - ✅ **Submitted Sun 13:52** (14 of 14; checked against the writeup). Optional until 20:00: make the AWS answer's section labels visible in the one-block display (Edit project); a blog on AWS Builder Center (top 5 win AirPods, individual).
+   - ✅ **Submitted Sun 13:52** (14 of 14; checked against the writeup). Edited 13:57 (Aryan: "edit it fast"): the AWS answer's section labels in capitals (LISTENING:, READING:, …) so the one-block display shows its structure; text otherwise unchanged, all fields re-checked on the saved page. Optional until 20:00: a blog on AWS Builder Center (top 5 win AirPods, individual).
    - **Don't:** use the console's demo controls (wipes the judged run), switch the model on, or send a location or a dirty-water complaint from Aryan's phone (its home is set to Dongri, inside the open case's 250 m: a dirty report would join the demo case and the console would no longer match the video; any location sent replaces Dongri).
 
 ## Open issues
