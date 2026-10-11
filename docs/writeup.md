@@ -18,7 +18,7 @@ Teesri Shikayat ("the third complaint") joins those complaints up. Residents sca
 
 In the demo, homes A–V on the phone wall are simulated and labelled on screen; my phone is real.
 
-On 11 Oct I phoned 10 people in Mumbai, Pune, Amravati, Delhi, Baroda and Vellore about their tap water. Most said they had not known their water was dirty, and that reaching the BMC or their local water authority was the hard part; one had fallen ill from a sewage pipe leak and spent 2–3 days in hospital. Those are the two gaps this fills: neighbours' complaints warn the homes that didn't know, and the ward office gets one joined-up case. Before submitting, I also showed the bot to five people outside the project, three friends and two older people, and gave them the QR code; all five said joining on Telegram was easy to follow.
+On 11 Oct I asked 11 people in Mumbai, Pune, Amravati, Delhi, Baroda and Vellore, by phone, about their tap water. Most said they had not known their water was dirty, and that reaching the BMC or their local water authority was the hard part; a friend in Delhi had fallen ill from a sewage pipe leak and spent 2–3 days in hospital, and his roommate said the water had given him hair fall. Those are the two gaps this fills: neighbours' complaints warn the homes that didn't know, and the ward office gets one joined-up case. Before submitting, I also showed the bot to five people outside the project, three friends and two older people, and gave them the QR code; all five said joining on Telegram was easy to follow.
 
 ## How did you use AWS in your project?
 
