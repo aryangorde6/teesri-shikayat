@@ -61,6 +61,7 @@ Step Functions task tokens carried the whole case: a Standard execution waits da
 - GitHub: https://github.com/aryangorde6/teesri-shikayat
 - Deployed (live console): https://eirioqqhvtvve3aw5xhpje2wju0jztrl.lambda-url.ap-south-1.on.aws/console
 - YouTube: https://youtu.be/L0UteWpltyw
+- Blog (AWS Builder Center): https://builder.aws.com/content/3KYOE7QsILh1qS2cN5fbcCJDLzy/three-complaints-one-warning-a-dirty-water-tripwire-on-aws
 - Try the bot (Telegram, in Hindi): https://t.me/TeesriShikayatBot?start=B. One report gets a receipt; an alarm needs three neighbours.
 
 *Not affiliated with BMC or any water board.*
