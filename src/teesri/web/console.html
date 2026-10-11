@@ -297,7 +297,7 @@ function drawMap(s) {
 // --- panels -----------------------------------------------------------------------------------
 const STEPS = [["OPEN", "Tripwire"], ["AWAITING_APPROVAL", "Volunteer"], ["WARNED", "Ring warned"], ["AWAITING_WARD", "Ward office"],
                ["CLAIMED_RESOLVED", "“Resolved”"], ["CHECKING", "Residents asked"], ["END", "Closed at the tap?"]];
-const ORDER = ["OPEN","PREPARED","AWAITING_APPROVAL","WARNING","WARNED","WARD_NOTIFIED","AWAITING_WARD","CLAIMED_RESOLVED","CHECKING","REOPENED","CLOSED_AT_TAP","STILL_OPEN"];
+const ORDER = ["OPEN","PREPARED","AWAITING_APPROVAL","UNAPPROVED","HELD","WARNING","WARNED","WARD_NOTIFIED","AWAITING_WARD","NO_WARD_REPLY","CLAIMED_RESOLVED","CHECKING","REOPENED","CLOSED_AT_TAP","STILL_OPEN"];
 function statusChip(inc) {
   const el = $("#status");
   if (!inc) { el.className = "chip"; el.textContent = "no incident"; return; }
@@ -337,6 +337,8 @@ function caseHtml(s) {
   const i = ORDER.indexOf(inc.status);
   const steps = STEPS.map(([st, label]) => {
     let c = ORDER.indexOf(st) < i ? "done" : ORDER.indexOf(st) === i ? "now" : "";
+    const stopped = { AWAITING_APPROVAL: { UNAPPROVED: "Not approved", HELD: "Held" }, AWAITING_WARD: { NO_WARD_REPLY: "No ward reply" } }[st]?.[inc.status];
+    if (stopped) { label = stopped; c = "bad"; }
     if (st === "END") { label = inc.status === "CLOSED_AT_TAP" ? "CLOSED_AT_TAP" : inc.status === "REOPENED" || inc.reopen_count ? "REOPENED" : inc.status === "STILL_OPEN" ? "STILL_OPEN" : label;
       c = inc.status === "CLOSED_AT_TAP" ? "good" : (inc.status === "REOPENED" || inc.reopen_count) ? "bad" : c; }
     return `<span class="${c}">${esc(label)}</span>`;
@@ -358,6 +360,7 @@ function feedHtml(s) {
     closed_at_tap: `Residents: ${f.clean} said clean, none dirty → CLOSED_AT_TAP`,
     still_open: "Too few answers → STILL_OPEN (silence never closes a case)",
     unapproved: "Volunteer did not answer → UNAPPROVED (no warning sent)", held: "Volunteer: not now → HELD",
+    no_ward_reply: "Ward office did not reply in time → NO_WARD_REPLY (not closed: only residents close a case)",
   }[f.decision] || f.decision);
   const rows = s.feed.slice().reverse().map((f) => `<div><time>${esc(ist(f.ts))}</time>${esc(say(f))}</div>`).join("");
   return `<div class="label">Timeline</div><div class="feed">${rows || '<div class="empty">Nothing yet.</div>'}</div>`;
