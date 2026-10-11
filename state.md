@@ -131,7 +131,7 @@ AWS_PROFILE=hackathon .venv/bin/python scripts/set_webhook.py            # only 
 
 ## Open issues
 
-- **Deadline moved (seen Sun 17:17):** the event page's countdown now targets `2026-10-11T18:29:00Z` = **Sun 11 Oct 23:59 IST** (was 20:00). The submission stays editable until then. Aryan plans to publish the Builder Center blog at 20:10 and link it in the submission's Blog links before 23:59. Student verification on Builder Center ("Required to compete") not yet confirmed: the Students page shows "Verify now"; Aryan to check.
+- **Deadline moved (seen Sun 17:17):** the event page's countdown now targets `2026-10-11T18:29:00Z` = **Sun 11 Oct 23:59 IST** (was 20:00). The submission stays editable until then. Aryan plans to publish the Builder Center blog at 20:10 and link it in the submission's Blog links before 23:59. Student verification on Builder Center ("Required to compete"): **done**, Aryan confirmed (Sun 17:2x).
 
 - **Sat 17 Oct ~17:35 IST:** the judged case's ward wait (7 days) ends and it becomes `NO_WARD_REPLY`; expected, and the console shows it (fixed Sun 16:27). Nothing to do.
 
