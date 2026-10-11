@@ -68,16 +68,20 @@ The timers are a real deployment's; the demo runs a faster clock (30 min, 7 days
 | Service | Used for |
 |---|---|
 | **AWS Lambda** (3 functions, Python 3.13, arm64) + a Function URL | The bot's webhook, the console and its API; the tripwire; the case steps. Reserved concurrency as a cost guard |
-| **Amazon S3** | Voice notes, transcripts, Polly audio, the model weights |
+| **Amazon S3** | Voice notes, transcripts, Polly audio, the model weights. Voice notes and raw transcripts are deleted after 30 days |
 | **Amazon Transcribe** (hi-IN) | Hindi voice notes to text |
 | **Amazon EventBridge** (a rule) | Transcribe's job-state events for our `vn_` jobs wake the same Lambda to finish the report, so nothing polls |
-| **Amazon DynamoDB** (one on-demand table) | Homes, reports, incidents and the Safety log. Streams for new reports; a transaction so a report belongs to at most one incident; a geohash index for "homes within 250 m". Point-in-time recovery (35 days) and deletion protection |
+| **Amazon DynamoDB** (one on-demand table) | Homes, reports, incidents and the Safety log. Streams for new reports; a transaction so a report belongs to at most one incident; a geohash index for "homes within 250 m". Encrypted with our own KMS key; point-in-time recovery (35 days) and deletion protection |
 | **Amazon EventBridge Pipes** | The stream → the tripwire, filtered to new reports (`INSERT`, key `RPT#…`); a failed batch is bisected |
 | **AWS Step Functions** (Standard) | One execution per incident, above |
 | **Amazon Polly** (Kajal, Hindi) | Spoken warnings, receipts and the reopen notice |
 | **Amazon SES** | The ward office email (a test inbox in the demo) |
 | **Amazon EC2** (Graviton4) + **Amazon SQS** | Our own model (Gemma 4) with no inbound ports: requests arrive on an encrypted queue, answers come back as DynamoDB items, and its IAM role may write only `MODEL#heartbeat` and `MODELRESP#…` items (a `dynamodb:LeadingKeys` condition) |
 | **Amazon CloudWatch** + **Amazon SNS** | Five alarms: a case execution that fails or times out, and an error in any of the three Lambdas. Each emails a person through one SNS topic, and again when it clears. A stopped case isn't alerted: the console's demo reset stops cases on purpose |
+| **AWS KMS** | Our own key (`alias/teesri-data`, rotated yearly) for the table: homes' locations, consent and reports |
+| **AWS CloudTrail** | Every API call in the account, each use of the key included, logged to a private bucket with log-file validation |
+| **Amazon GuardDuty** | Threat detection on the account; medium and high findings go to the same alert email through EventBridge |
+| **IAM Access Analyzer** | Reports anything reachable from outside the account: for this stack, only the Function URL, by design |
 | **AWS Systems Manager** Parameter Store | The bot token, the webhook secret and the console token |
 | **Registry of Open Data on AWS** | GHS-POP population for every ring (`s3://jrc-ghsl`) |
 | **AWS CDK** (Python) | The whole stack, one `cdk deploy` (about a minute) |
@@ -144,6 +148,20 @@ Not ours, used under their licences:
 - **Leaflet** (BSD-2-Clause) for the console map; map tiles and place data © OpenStreetMap contributors (ODbL).
 - **GHS-POP R2023A** (European Commission JRC, CC BY 4.0), see Data above.
 - Video: **Noto Sans / Noto Sans Devanagari** (SIL OFL 1.1); narration voiced with **Chatterbox TTS** (Resemble AI, MIT); music: "Immersed" by **Kevin MacLeod** (incompetech.com), licensed under CC BY 4.0; opening clip (labelled "illustrative footage"): "Tap, Water, Switch Off" by **Kaffeesüchtig** on Pixabay (https://pixabay.com/videos/tap-water-switch-off-close-136086/), Pixabay Content License; sound effects: "Simple Whoosh", "Notification Sound Effect" and "Error Sound" by **DRAGON-STUDIO** on Pixabay, Pixabay Content License.
+
+## Security
+
+Everything here is in `infra/stack.py` unless a file is named.
+
+- **Nothing acts without a rule saying yes.** Every side effect and every agent tool call goes through Cedar (8 policies in `src/teesri/policy.py`, fails closed): only residents close a case, no names or numbers go to the authority, no warning goes out before a volunteer approves, no message goes to a home without consent. Every decision is on the console's Safety tab.
+- **Encrypted at rest and in transit.** The table (homes' locations, consent and reports) is under our own KMS key, rotated yearly, so every use of it is logged and it can be switched off. The bucket, the model queue and the model instance's disk are encrypted with AWS-managed keys. Both buckets block all public access and refuse non-TLS requests. Secrets are SecureStrings in SSM Parameter Store, and the Lambdas may read only `/teesri/*`.
+- **Least privilege.** The model instance has no inbound ports (requests over SQS, answers through DynamoDB), requires IMDSv2, and its IAM role may write only `MODEL#heartbeat` and `MODELRESP#…` items (a `dynamodb:LeadingKeys` condition). The llama.cpp build is SHA-256-pinned. Each Lambda has reserved concurrency as a cost guard.
+- **Only Telegram reaches the bot.** The webhook checks Telegram's secret token in constant time (`src/teesri/handler.py`); the console's demo controls need a token from SSM (`src/teesri/api.py`). IAM Access Analyzer confirms the Function URL is the only part of the stack reachable from outside the account.
+- **Audit.** CloudTrail records every API call in the account, each use of the table's key included, in a private bucket with log-file validation: hourly digest files show whether any log was changed or deleted. Logs are kept a year.
+- **Detection and alerts.** GuardDuty watches the account. A medium or high finding, a case that fails or times out, or any Lambda error emails a person through one SNS topic.
+- **Recovery.** Point-in-time recovery (any second of the last 35 days) and deletion protection on the table; the key is kept even if the stack is deleted, so backups stay readable.
+- **Keep less.** Voice notes and raw transcripts are deleted after 30 days (the report keeps the words). Tapping नहीं at consent deletes the home. The public console shows no Telegram ids, and shows a real home (rounded to about 100 m) only while it is part of an alarm.
+- **Not done yet.** The bucket and the model queue still use AWS-managed keys. Moving them to our own key changes who can read each voice note, and the only full test is a live voice note through the bot, so it waits until after judging.
 
 ## Privacy
 

@@ -9,13 +9,18 @@ from aws_cdk import (
     Duration,
     Stack,
     Fn,
+    RemovalPolicy,
+    aws_accessanalyzer as accessanalyzer,
+    aws_cloudtrail as cloudtrail,
     aws_cloudwatch as cw,
     aws_cloudwatch_actions as cw_actions,
     aws_dynamodb as ddb,
     aws_ec2 as ec2,
     aws_events as events,
     aws_events_targets as targets,
+    aws_guardduty as guardduty,
     aws_iam as iam,
+    aws_kms as kms,
     aws_lambda as lambda_,
     aws_pipes as pipes,
     aws_s3 as s3,
@@ -40,6 +45,21 @@ class TeesriStack(Stack):
     def __init__(self, scope: Construct, cid: str, **kwargs) -> None:
         super().__init__(scope, cid, **kwargs)
 
+        # Homes' locations, consent and reports sit under our own key: rotated yearly, every use logged by
+        # CloudTrail, and it can be switched off. Like AWS's own aws/dynamodb key, anything in this account allowed
+        # to use the table may use the key through DynamoDB (so the model instance needs nothing extra); the
+        # table grants below also give the Lambdas and the Pipe the key.
+        data_key = kms.Key(self, "DataKey", alias="alias/teesri-data", enable_key_rotation=True,
+                           description="Teesri Shikayat: homes, consent and reports (DynamoDB)",
+                           removal_policy=RemovalPolicy.RETAIN)
+        data_key.add_to_resource_policy(iam.PolicyStatement(
+            principals=[iam.AnyPrincipal()],
+            actions=["kms:Encrypt", "kms:Decrypt", "kms:ReEncrypt*", "kms:GenerateDataKey*", "kms:DescribeKey",
+                     "kms:CreateGrant"],
+            resources=["*"],
+            conditions={"StringEquals": {"kms:CallerAccount": self.account,
+                                         "kms:ViaService": f"dynamodb.{self.region}.amazonaws.com"}}))
+
         s = ddb.AttributeType.STRING
         table = ddb.Table(
             self, "Table",
@@ -48,6 +68,8 @@ class TeesriStack(Stack):
             billing_mode=ddb.BillingMode.PAY_PER_REQUEST,
             stream=ddb.StreamViewType.NEW_IMAGE,
             time_to_live_attribute="ttl",
+            encryption=ddb.TableEncryption.CUSTOMER_MANAGED,
+            encryption_key=data_key,
             point_in_time_recovery_specification=ddb.PointInTimeRecoverySpecification(
                 point_in_time_recovery_enabled=True),  # restore to any second of the last 35 days
             deletion_protection=True,  # residents' consent and reports can't go with a stray delete
@@ -63,6 +85,9 @@ class TeesriStack(Stack):
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             encryption=s3.BucketEncryption.S3_MANAGED,
             enforce_ssl=True,
+            # A resident's voice and the raw transcript go after 30 days; the report keeps the words it needs.
+            lifecycle_rules=[s3.LifecycleRule(id=f"expire-{prefix}", prefix=f"{prefix}/", expiration=Duration.days(30))
+                             for prefix in ("voice", "transcripts")],
         )
 
         # The self-hosted model (this account's Bedrock quota is 0): an open model in llama.cpp on one Graviton
@@ -279,6 +304,11 @@ class TeesriStack(Stack):
         # person through one topic. The address is subscribed once outside the stack (README), never in git.
         # Aborted cases are left out: the console's demo reset stops running cases on purpose.
         alerts = sns.Topic(self, "Alerts", display_name="Teesri Shikayat alerts")
+        alerts.add_to_resource_policy(iam.PolicyStatement(  # a topic policy replaces SNS's default one, so say it
+            principals=[iam.ServicePrincipal("cloudwatch.amazonaws.com")], actions=["sns:Publish"],
+            resources=[alerts.topic_arn],
+            conditions={"StringEquals": {"aws:SourceAccount": self.account},
+                        "ArnLike": {"aws:SourceArn": f"arn:aws:cloudwatch:{self.region}:{self.account}:alarm:*"}}))
         watched = {
             "CaseFailed": machine.metric_failed(period=Duration.minutes(5), statistic="Sum"),
             "CaseTimedOut": machine.metric_timed_out(period=Duration.minutes(5), statistic="Sum"),
@@ -293,6 +323,23 @@ class TeesriStack(Stack):
                 alarm_description=f"Teesri Shikayat: {name} in the last 5 minutes")
             alarm.add_alarm_action(cw_actions.SnsAction(alerts))
             alarm.add_ok_action(cw_actions.SnsAction(alerts))
+
+        # Who did what: every AWS API call in the account (including each use of the data key) goes to a private
+        # bucket, with digest files that show if a log was changed. GuardDuty watches the account for threats
+        # and its findings go to the same topic; Access Analyzer reports anything reachable from outside it.
+        audit = s3.Bucket(self, "AuditLogs", block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+                          encryption=s3.BucketEncryption.S3_MANAGED, enforce_ssl=True,
+                          lifecycle_rules=[s3.LifecycleRule(expiration=Duration.days(365))])
+        cloudtrail.Trail(self, "AuditTrail", bucket=audit, is_multi_region_trail=True,
+                         include_global_service_events=True, enable_file_validation=True)
+        guardduty.CfnDetector(self, "ThreatDetection", enable=True, finding_publishing_frequency="FIFTEEN_MINUTES")
+        events.Rule(
+            self, "ThreatFindings",
+            event_pattern=events.EventPattern(source=["aws.guardduty"], detail_type=["GuardDuty Finding"],
+                                              detail={"severity": [{"numeric": [">=", 4]}]}),  # medium and high
+            targets=[targets.SnsTopic(alerts)],
+        )
+        accessanalyzer.CfnAnalyzer(self, "ExternalAccess", type="ACCOUNT", analyzer_name="teesri-external-access")
 
         url = fn.add_function_url(auth_type=lambda_.FunctionUrlAuthType.NONE)
 
