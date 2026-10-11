@@ -1,6 +1,6 @@
 # Teesri Shikayat — submission writeup (draft)
 
-*One section per form field, named as on First Commit's form (Sep 2026); match them when this event's form opens. Paste each section into its field. Fill the YouTube link on submission day.*
+*One section per form field, named as on First Commit's form (Sep 2026); match them when this event's form opens. Paste each section into its field.*
 
 ## Project title
 
@@ -58,7 +58,7 @@ Step Functions task tokens carried the whole case: a Standard execution waits da
 
 - GitHub: https://github.com/aryangorde6/teesri-shikayat
 - Deployed (live console): https://eirioqqhvtvve3aw5xhpje2wju0jztrl.lambda-url.ap-south-1.on.aws/console
-- YouTube: _(link on submission day)_
+- YouTube: https://youtu.be/L0UteWpltyw
 - Try the bot (Telegram, in Hindi): https://t.me/TeesriShikayatBot?start=B. One report gets a receipt; an alarm needs three neighbours.
 
 *Not affiliated with BMC or any water board.*
