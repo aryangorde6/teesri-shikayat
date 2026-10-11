@@ -1,6 +1,6 @@
 # YouTube upload (Sun)
 
-Upload `video/out/teesri.mp4` (2:54) as **Unlisted**. The chapter list in the description turns into chapters on the progress bar by itself (each is at least 10 s, from the narration's timings), then open the link in a signed-out window before putting it in the form. **Thumbnail:** `video/thumbnail.png` (1280×720; YouTube Studio → Details → Thumbnail; custom thumbnails need a phone-verified account, otherwise pick one of YouTube's frames). Under "Altered or synthetic content" the narration is a synthetic voice but not a real person, so "No" is the honest answer; the description says it anyway.
+Upload `video/out/teesri.mp4` (2:54) as **Unlisted**. The chapter list in the description turns into chapters on the progress bar by itself (each is at least 10 s, from the narration's timings), then open the link in a signed-out window before putting it in the form. **Thumbnail:** `video/thumbnail.png` (1280×720; YouTube Studio → Details → Thumbnail; custom thumbnails need a phone-verified account, otherwise pick one of YouTube's frames). Under "Altered or synthetic content" the narration and the demo voice note are Chatterbox's built-in voice (no reference recording, so not a real person), the footage is real screen recordings plus one Pixabay stock clip, nothing is an AI-made realistic scene, and the music is Kevin MacLeod's, so "No" is the honest answer; the description says it anyway.
 
 **Title** (under 100 characters):
 
@@ -34,7 +34,7 @@ The phone survey (0:07) is my summary of 11 calls on 11 Oct 2026, not a study.
 What's simulated, and labelled on screen: homes A–V on the phone wall, the "+2 days" demo clock, the ward office's reply and its inbox. My phone is real. The Indore replay is a labelled reconstruction.
 
 Credits
-Narration: a synthetic voice made with Chatterbox TTS (Resemble AI, MIT).
+Narration and the Hindi voice note played into the phone: a synthetic voice, Chatterbox TTS's built-in voice (not a real person's), Resemble AI, MIT.
 Music: "Immersed" by Kevin MacLeod (incompetech.com). Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/
 Map data © OpenStreetMap contributors. Population: GHS-POP (European Commission JRC, CC BY 4.0).
 Opening clip (illustrative footage): "Tap, Water, Switch Off" by Kaffeesüchtig, Pixabay, https://pixabay.com/videos/tap-water-switch-off-close-136086/
