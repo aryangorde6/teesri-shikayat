@@ -1,6 +1,6 @@
 # Teesri Shikayat — submission writeup (draft)
 
-*One section per form field, named as on First Commit's form (Sep 2026); match them when this event's form opens. Paste each section into its field.*
+*One section per field of this event's submission form (checked Sun 11 Oct; no length limits except the title, 120). The form is plain text, so paste without the markdown.*
 
 ## Project title
 
@@ -10,7 +10,7 @@ Teesri Shikayat: a tripwire for dirty tap water
 
 Heat and Water
 
-## Description
+## What does your project do?
 
 Every monsoon in Mumbai, the water from my tap turns dirty, and I never know whether the house next door has it too. A leaking service line pulls sewage into one lane, but complaints reach the ward office one at a time and nobody connects them. Mumbai logged 1,514 contaminated-water complaints from January to August 2026; B ward had 4.03% unfit samples against 0.28% citywide, and on 30 Sep the BMC asked for immediate alerts to residents (Free Press Journal, 1 Oct 2026). In Indore's Bhagirathpura, residents complained about foul water from mid-December 2025; the first illness came on Dec 27, over 1,400 people fell ill, and a judicial commission examined 36 deaths.
 
@@ -22,7 +22,11 @@ On 11 Oct I asked 11 people in Mumbai, Pune, Amravati, Delhi, Baroda and Vellore
 
 ## How did you use AWS in your project?
 
-Ship it (services), one CDK stack in ap-south-1, three Lambdas (Python 3.13, arm64, reserved concurrency as a cost guard).
+Teesri Shikayat joins up dirty-water complaints sent as Hindi voice notes on Telegram: three homes within 250 m inside 72 hours trip a warning to every enrolled home around them, and only the residents can close the case.
+
+**AWS open source.** The Strands Agents SDK runs the case agent, Cedar (through cedarpy) checks every action against 8 policies, and the AWS CDK (Python) defines the whole stack below; details under Guarding.
+
+**AWS services.** One CDK stack in ap-south-1, three Lambdas (Python 3.13, arm64, reserved concurrency as a cost guard).
 
 **Listening.** A Telegram voice note reaches a Lambda Function URL, goes to S3 and to Amazon Transcribe (hi-IN). An EventBridge rule on Transcribe's job-state events (our `vn_` jobs, COMPLETED or FAILED) wakes the same Lambda to finish the report, so nothing polls.
 
@@ -37,8 +41,6 @@ Ship it (services), one CDK stack in ap-south-1, three Lambdas (Python 3.13, arm
 **Securing.** Homes, consent and reports are under our own KMS key (rotated yearly), with point-in-time recovery and deletion protection; voice notes are deleted after 30 days. CloudTrail logs every API call with log-file validation, and IAM Access Analyzer shows the bot's URL is the only part of the stack reachable from outside. A GuardDuty finding, a failed case or any Lambda error emails a person through one SNS topic.
 
 **Cost.** One real incident (23 homes warned, one reopen) cost ₹0.94 ($0.0107), measured from its own Step Functions history and Lambda logs and priced with the AWS Pricing API; the model instance is extra while it is on.
-
-Build it (open source): Strands Agents SDK, Cedar (cedarpy) and the AWS CDK (Python).
 
 **Proof.** 66 tests (moto, no AWS account needed) cover the tripwire, the ring, the closure rule, the Cedar policies and the public API, and run on GitHub Actions on every push; `scripts/preflight.py` checks the live stack, and `--security` checks 10 more (the key, backups, CloudTrail, GuardDuty, Access Analyzer, the alarms). The console and the bot are live now.
 
