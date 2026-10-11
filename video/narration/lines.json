@@ -218,5 +218,20 @@
   "n": 44,
   "label": "2 Indore (ALT)",
   "say": "Dozens died."
+ },
+ {
+  "n": 45,
+  "label": "1b survey",
+  "say": "So I asked eleven people in six cities."
+ },
+ {
+  "n": 46,
+  "label": "1b survey",
+  "say": "Most never knew their water was dirty."
+ },
+ {
+  "n": 47,
+  "label": "1b survey",
+  "say": "One friend ended up in hospital after a sewage leak."
  }
 ]
