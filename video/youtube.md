@@ -1,6 +1,6 @@
 # YouTube upload (Sun)
 
-Upload `video/out/teesri.mp4` (2:44) as **Unlisted**, then open the link in a signed-out window before putting it in the form. **Thumbnail:** `video/thumbnail.png` (1280×720; YouTube Studio → Details → Thumbnail; custom thumbnails need a phone-verified account, otherwise pick one of YouTube's frames). Under "Altered or synthetic content" the narration is a synthetic voice but not a real person, so "No" is the honest answer; the description says it anyway.
+Upload `video/out/teesri.mp4` (2:44) as **Unlisted**. The chapter list in the description turns into chapters on the progress bar by itself (each is at least 10 s, from the narration's timings), then open the link in a signed-out window before putting it in the form. **Thumbnail:** `video/thumbnail.png` (1280×720; YouTube Studio → Details → Thumbnail; custom thumbnails need a phone-verified account, otherwise pick one of YouTube's frames). Under "Altered or synthetic content" the narration is a synthetic voice but not a real person, so "No" is the honest answer; the description says it anyway.
 
 **Title** (under 100 characters):
 
@@ -14,6 +14,16 @@ Teesri Shikayat: three dirty-water complaints, one warning | WeMakeDevs × AWS E
 Teesri Shikayat ("the third complaint") is a tripwire for dirty tap water. Residents send Hindi voice notes on Telegram. When three homes within 250 m report dirty water inside 72 hours, everyone enrolled around them is warned, and only the residents can close the case.
 
 Built in four days for the WeMakeDevs × AWS Environmental Hacks (Heat and Water track) on AWS: Lambda, Transcribe (hi-IN), DynamoDB Streams + EventBridge Pipes, Step Functions, Polly, an open model (Gemma 4) on our own EC2 instance with the Strands Agents SDK, and Cedar policies on every action.
+
+Chapters
+0:00 Dirty taps in Mumbai, and Indore
+0:15 Teesri Shikayat: the third complaint
+0:36 Join on Telegram, complain in Hindi
+1:04 The tripwire fires
+1:16 A volunteer approves, every home is warned
+1:41 The ward office says "resolved"; the residents decide
+2:09 Indore replay, and how it runs on AWS
+2:33 Closed at the tap, not on paper
 
 Code: https://github.com/aryangorde6/teesri-shikayat
 Live console: https://eirioqqhvtvve3aw5xhpje2wju0jztrl.lambda-url.ap-south-1.on.aws/console

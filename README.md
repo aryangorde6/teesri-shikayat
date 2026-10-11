@@ -141,7 +141,7 @@ Secrets live in SSM Parameter Store (`/teesri/telegram/bot-token`, `/teesri/tele
 
 ## Credits
 
-Not ours, used under their licences:
+Our code is MIT-licensed ([LICENSE](LICENSE)). Not ours, used under their licences:
 
 - **Gemma 4 E4B** (Google, Apache-2.0), QAT q4_0 GGUF, run with **llama.cpp** (MIT, official arm64 release build).
 - **Strands Agents SDK** (Apache-2.0) and **Cedar** via `cedarpy` (Apache-2.0).
