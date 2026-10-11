@@ -71,12 +71,13 @@ The timers are a real deployment's; the demo runs a faster clock (30 min, 7 days
 | **Amazon S3** | Voice notes, transcripts, Polly audio, the model weights |
 | **Amazon Transcribe** (hi-IN) | Hindi voice notes to text |
 | **Amazon EventBridge** (a rule) | Transcribe's job-state events for our `vn_` jobs wake the same Lambda to finish the report, so nothing polls |
-| **Amazon DynamoDB** (one on-demand table) | Homes, reports, incidents and the Safety log. Streams for new reports; a transaction so a report belongs to at most one incident; a geohash index for "homes within 250 m" |
+| **Amazon DynamoDB** (one on-demand table) | Homes, reports, incidents and the Safety log. Streams for new reports; a transaction so a report belongs to at most one incident; a geohash index for "homes within 250 m". Point-in-time recovery (35 days) and deletion protection |
 | **Amazon EventBridge Pipes** | The stream → the tripwire, filtered to new reports (`INSERT`, key `RPT#…`); a failed batch is bisected |
 | **AWS Step Functions** (Standard) | One execution per incident, above |
 | **Amazon Polly** (Kajal, Hindi) | Spoken warnings, receipts and the reopen notice |
 | **Amazon SES** | The ward office email (a test inbox in the demo) |
 | **Amazon EC2** (Graviton4) + **Amazon SQS** | Our own model (Gemma 4) with no inbound ports: requests arrive on an encrypted queue, answers come back as DynamoDB items, and its IAM role may write only `MODEL#heartbeat` and `MODELRESP#…` items (a `dynamodb:LeadingKeys` condition) |
+| **Amazon CloudWatch** + **Amazon SNS** | Five alarms: a case execution that fails or times out, and an error in any of the three Lambdas. Each emails a person through one SNS topic, and again when it clears. A stopped case isn't alerted: the console's demo reset stops cases on purpose |
 | **AWS Systems Manager** Parameter Store | The bot token, the webhook secret and the console token |
 | **Registry of Open Data on AWS** | GHS-POP population for every ring (`s3://jrc-ghsl`) |
 | **AWS CDK** (Python) | The whole stack, one `cdk deploy` (about a minute) |
@@ -122,6 +123,7 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/python -m pytest -q                                           # 66 tests, no AWS account needed
 ./build.sh && AWS_PROFILE=<profile> cdk deploy                          # one stack: Teesri (ap-south-1)
 AWS_PROFILE=<profile> .venv/bin/python scripts/set_webhook.py           # point the Telegram bot at the stack
+AWS_PROFILE=<profile> aws sns subscribe --protocol email --topic-arn <AlertsTopicArn> --notification-endpoint <you>  # failure alerts; confirm the email
 AWS_PROFILE=<profile> .venv/bin/python scripts/scenario.py model on      # start the model instance (stops itself when idle)
 AWS_PROFILE=<profile> .venv/bin/python scripts/scenario.py seed          # 22 simulated homes; then open <FunctionUrl>/console
 ```

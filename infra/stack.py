@@ -1,5 +1,5 @@
 """The whole backend: one table, one bucket, the API Lambda behind a Function URL, and the tripwire
-Lambda fed by DynamoDB Streams through an EventBridge Pipe."""
+Lambda fed by DynamoDB Streams through an EventBridge Pipe. Failures page a person through one SNS topic."""
 import base64
 import json
 import pathlib
@@ -9,6 +9,8 @@ from aws_cdk import (
     Duration,
     Stack,
     Fn,
+    aws_cloudwatch as cw,
+    aws_cloudwatch_actions as cw_actions,
     aws_dynamodb as ddb,
     aws_ec2 as ec2,
     aws_events as events,
@@ -17,6 +19,7 @@ from aws_cdk import (
     aws_lambda as lambda_,
     aws_pipes as pipes,
     aws_s3 as s3,
+    aws_sns as sns,
     aws_sqs as sqs,
     aws_ssm as ssm,
     aws_stepfunctions as sfn,
@@ -45,6 +48,9 @@ class TeesriStack(Stack):
             billing_mode=ddb.BillingMode.PAY_PER_REQUEST,
             stream=ddb.StreamViewType.NEW_IMAGE,
             time_to_live_attribute="ttl",
+            point_in_time_recovery_specification=ddb.PointInTimeRecoverySpecification(
+                point_in_time_recovery_enabled=True),  # restore to any second of the last 35 days
+            deletion_protection=True,  # residents' consent and reports can't go with a stray delete
         )
         table.add_global_secondary_index(
             index_name="GSI1",
@@ -269,6 +275,25 @@ class TeesriStack(Stack):
         for f in (fn, tripwire):
             f.add_environment("STATE_MACHINE_ARN", machine.state_machine_arn)
 
+        # Nobody watches a dashboard at 2 a.m.: a case that fails or times out, or any Lambda error, emails a
+        # person through one topic. The address is subscribed once outside the stack (README), never in git.
+        # Aborted cases are left out: the console's demo reset stops running cases on purpose.
+        alerts = sns.Topic(self, "Alerts", display_name="Teesri Shikayat alerts")
+        watched = {
+            "CaseFailed": machine.metric_failed(period=Duration.minutes(5), statistic="Sum"),
+            "CaseTimedOut": machine.metric_timed_out(period=Duration.minutes(5), statistic="Sum"),
+            **{f"{name}Errors": f.metric_errors(period=Duration.minutes(5), statistic="Sum")
+               for name, f in (("Api", fn), ("Tripwire", tripwire), ("Case", case_fn))},
+        }
+        for name, metric in watched.items():
+            alarm = cw.Alarm(
+                self, f"{name}Alarm", metric=metric, threshold=1, evaluation_periods=1,
+                comparison_operator=cw.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+                treat_missing_data=cw.TreatMissingData.NOT_BREACHING,
+                alarm_description=f"Teesri Shikayat: {name} in the last 5 minutes")
+            alarm.add_alarm_action(cw_actions.SnsAction(alerts))
+            alarm.add_ok_action(cw_actions.SnsAction(alerts))
+
         url = fn.add_function_url(auth_type=lambda_.FunctionUrlAuthType.NONE)
 
         CfnOutput(self, "FunctionUrl", value=url.url)
@@ -277,3 +302,4 @@ class TeesriStack(Stack):
         CfnOutput(self, "TripwireName", value=tripwire.function_name)
         CfnOutput(self, "CaseMachineArn", value=machine.state_machine_arn)
         CfnOutput(self, "ModelInstanceId", value=model_vm.instance_id)
+        CfnOutput(self, "AlertsTopicArn", value=alerts.topic_arn)
