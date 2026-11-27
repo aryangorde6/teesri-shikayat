@@ -26,7 +26,7 @@ Chapters
 2:43 Closed at the tap, not on paper
 
 Code: https://github.com/aryangorde6/teesri-shikayat
-Live console: https://eirioqqhvtvve3aw5xhpje2wju0jztrl.lambda-url.ap-south-1.on.aws/console
+Live console: https://teesri-shikayat.aryangorde.com
 Try the bot (Hindi): https://t.me/TeesriShikayatBot?start=B
 
 The phone survey (0:07) is my summary of 11 calls on 11 Oct 2026, not a study.
