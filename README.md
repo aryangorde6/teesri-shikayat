@@ -4,7 +4,7 @@
 
 **A tripwire for dirty tap water.** When three homes close together report dirty water, everyone around them is warned, and only the residents can close the case.
 
-**Watch:** [the 2:54 demo video](https://youtu.be/L0UteWpltyw) · **Read:** [the build story on AWS Builder Center](https://builder.aws.com/content/3KYOE7QsILh1qS2cN5fbcCJDLzy/three-complaints-one-warning-a-dirty-water-tripwire-on-aws) · **Live:** [the console on AWS](https://eirioqqhvtvve3aw5xhpje2wju0jztrl.lambda-url.ap-south-1.on.aws/console) (the recorded demo run: the ring, the warned homes, the ward office's "Resolved" denied, the case reopened) · **Try the bot:** [@TeesriShikayatBot](https://t.me/TeesriShikayatBot?start=B) on Telegram (Hindi)
+**Watch:** [the 2:54 demo video](https://youtu.be/L0UteWpltyw) · **Read:** [the build story on AWS Builder Center](https://builder.aws.com/content/3KYOE7QsILh1qS2cN5fbcCJDLzy/three-complaints-one-warning-a-dirty-water-tripwire-on-aws) · **Live:** [teesri-shikayat.aryangorde.com](https://teesri-shikayat.aryangorde.com), the console (the recorded demo run: the ring, the warned homes, the ward office's "Resolved" denied, the case reopened) · **Try the bot:** [@TeesriShikayatBot](https://t.me/TeesriShikayatBot?start=B) on Telegram (Hindi)
 
 Built for the WeMakeDevs × AWS **Environmental Hacks** (Heat and Water track), Oct 8–11, 2026. Demo setting: Dongri, B ward, Mumbai. Not affiliated with BMC or any water board.
 
@@ -72,6 +72,7 @@ The timers are a real deployment's; the demo runs a faster clock (30 min, 7 days
 | Service | Used for |
 |---|---|
 | **AWS Lambda** (3 functions, Python 3.13, arm64) + a Function URL | The bot's webhook, the console and its API; the tripwire; the case steps. Reserved concurrency as a cost guard |
+| **Amazon CloudFront** | The console's own address, teesri-shikayat.aryangorde.com: passes every request through to the Function URL, nothing cached; `/` opens the console |
 | **Amazon S3** | Voice notes, transcripts, Polly audio, the model weights. Voice notes and raw transcripts are deleted after 30 days |
 | **Amazon Transcribe** (hi-IN) | Hindi voice notes to text |
 | **Amazon EventBridge** (a rule) | Transcribe's job-state events for our `vn_` jobs wake the same Lambda to finish the report, so nothing polls |
@@ -149,6 +150,8 @@ AWS_PROFILE=<profile> .venv/bin/python scripts/scenario.py model on      # start
 AWS_PROFILE=<profile> .venv/bin/python scripts/scenario.py seed          # 22 simulated homes; then open <FunctionUrl>/console
 ```
 
+The console's own address comes from `cdk.json`: `domain`, and `certificateId` of an ACM certificate in us-east-1 that covers it. Point the domain at the stack's `SiteDnsTarget` output with a CNAME. Remove `domain` to deploy without one.
+
 Secrets live in SSM Parameter Store (`/teesri/telegram/bot-token`, `/teesri/telegram/webhook-secret`, `/teesri/console-token`), never in code.
 
 ## Data
@@ -173,7 +176,7 @@ Everything here is in `infra/stack.py` unless a file is named.
 - **Nothing acts without a rule saying yes.** Every side effect and every agent tool call goes through Cedar (8 policies in `src/teesri/policy.py`, fails closed): only residents close a case, no names or numbers go to the authority, no warning goes out before a volunteer approves, no message goes to a home without consent. Every decision is on the console's Safety tab.
 - **Encrypted at rest and in transit.** The table (homes' locations, consent and reports) is under our own KMS key, rotated yearly, so every use of it is logged and it can be switched off. The bucket, the model queue and the model instance's disk are encrypted with AWS-managed keys. Both buckets block all public access and refuse non-TLS requests. Secrets are SecureStrings in SSM Parameter Store, and the Lambdas may read only `/teesri/*`.
 - **Least privilege.** The model instance has no inbound ports (requests over SQS, answers through DynamoDB), requires IMDSv2, and its IAM role may write only `MODEL#heartbeat` and `MODELRESP#…` items (a `dynamodb:LeadingKeys` condition). The llama.cpp build is SHA-256-pinned. Each Lambda has reserved concurrency as a cost guard.
-- **Only Telegram reaches the bot.** The webhook checks Telegram's secret token in constant time (`src/teesri/handler.py`); the console's demo controls need a token from SSM (`src/teesri/api.py`). IAM Access Analyzer confirms the Function URL is the only part of the stack reachable from outside the account.
+- **Only Telegram reaches the bot.** The webhook checks Telegram's secret token in constant time (`src/teesri/handler.py`); the console's demo controls need a token from SSM (`src/teesri/api.py`). IAM Access Analyzer confirms the Function URL is the only part of the stack reachable from outside the account; the CloudFront address only passes requests through to it.
 - **Audit.** CloudTrail records every API call in the account, each use of the table's key included, in a private bucket with log-file validation: hourly digest files show whether any log was changed or deleted. Logs are kept a year.
 - **Detection and alerts.** GuardDuty watches the account. A medium or high finding, a case that fails or times out, or any Lambda error emails a person through one SNS topic.
 - **Recovery.** Point-in-time recovery (any second of the last 35 days) and deletion protection on the table; the key is kept even if the stack is deleted, so backups stay readable.

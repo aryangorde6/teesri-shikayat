@@ -1,5 +1,9 @@
 {
   "app": ".venv/bin/python infra/app.py",
+  "context": {
+    "domain": "teesri-shikayat.aryangorde.com",
+    "certificateId": "23e46fe0-9dba-4b40-b70e-2d5f1d275493"
+  },
   "watch": {
     "include": ["src/**", "infra/**"]
   }

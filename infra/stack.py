@@ -1,5 +1,6 @@
-"""The whole backend: one table, one bucket, the API Lambda behind a Function URL, and the tripwire
-Lambda fed by DynamoDB Streams through an EventBridge Pipe. Failures page a person through one SNS topic."""
+"""The whole backend: one table, one bucket, the API Lambda behind a Function URL (and CloudFront, for the
+console's own address), and the tripwire Lambda fed by DynamoDB Streams through an EventBridge Pipe. Failures
+page a person through one SNS topic."""
 import base64
 import json
 import pathlib
@@ -11,6 +12,9 @@ from aws_cdk import (
     Fn,
     RemovalPolicy,
     aws_accessanalyzer as accessanalyzer,
+    aws_certificatemanager as acm,
+    aws_cloudfront as cloudfront,
+    aws_cloudfront_origins as origins,
     aws_cloudtrail as cloudtrail,
     aws_cloudwatch as cw,
     aws_cloudwatch_actions as cw_actions,
@@ -342,6 +346,45 @@ class TeesriStack(Stack):
         accessanalyzer.CfnAnalyzer(self, "ExternalAccess", type="ACCOUNT", analyzer_name="teesri-external-access")
 
         url = fn.add_function_url(auth_type=lambda_.FunctionUrlAuthType.NONE)
+
+        # The console on its own address (cdk.json: "domain", and "certificateId" of an ACM certificate in
+        # us-east-1 that covers it, as CloudFront requires). Without "domain" there is no distribution. Nothing is
+        # cached: each request goes on to the Function URL with its path, query, body and headers, except Host,
+        # which a Function URL wants to be its own. "/" opens the console. Telegram's webhook stays on the
+        # Function URL itself, so the bot does not depend on this.
+        domain = self.node.try_get_context("domain")
+        if domain:
+            cert = acm.Certificate.from_certificate_arn(
+                self, "SiteCert",
+                f"arn:aws:acm:us-east-1:{self.account}:certificate/{self.node.get_context('certificateId')}")
+            root_to_console = cloudfront.Function(
+                self, "RootToConsole", runtime=cloudfront.FunctionRuntime.JS_2_0,
+                comment="Teesri Shikayat: / opens the console",
+                code=cloudfront.FunctionCode.from_inline(
+                    "function handler(event) {\n"
+                    "  if (event.request.uri === '/') {\n"
+                    "    return { statusCode: 302, statusDescription: 'Found', headers: { location: { value: '/console' } } };\n"
+                    "  }\n"
+                    "  return event.request;\n"
+                    "}\n"))
+            site = cloudfront.Distribution(
+                self, "Site", domain_names=[domain], certificate=cert,
+                comment=f"Teesri Shikayat console ({domain})",
+                http_version=cloudfront.HttpVersion.HTTP2_AND_3,
+                minimum_protocol_version=cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+                default_behavior=cloudfront.BehaviorOptions(
+                    origin=origins.FunctionUrlOrigin(url),
+                    viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                    allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
+                    cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+                    origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+                    response_headers_policy=cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
+                    function_associations=[cloudfront.FunctionAssociation(
+                        function=root_to_console, event_type=cloudfront.FunctionEventType.VIEWER_REQUEST)],
+                ),
+            )
+            CfnOutput(self, "SiteUrl", value=f"https://{domain}/console")
+            CfnOutput(self, "SiteDnsTarget", value=site.distribution_domain_name)  # CNAME the domain to this
 
         CfnOutput(self, "FunctionUrl", value=url.url)
         CfnOutput(self, "TableName", value=table.table_name)
